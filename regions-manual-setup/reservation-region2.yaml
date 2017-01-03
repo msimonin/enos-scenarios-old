@@ -79,3 +79,9 @@ kolla:
 
   # Patch files to support multi-region
   node_custom_config: /home/rcherrueau/regions-manual-setup/patches
+
+patches:
+  - name: Patches keystone service from kolla toolbox to handle region 
+    src: /home/rcherrueau/regions-manual-setup/patches/kolla-toolbox/start.yml
+    dst: /kolla/ansible/roles/common/tasks/start.yml
+    enabled: true

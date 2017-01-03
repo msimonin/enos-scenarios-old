@@ -69,7 +69,7 @@ kolla:
 
   enable_heat: false
 
-  # Patch files to support multi-region (in particular, horizon)
+  # Patch files to support multi-region
   node_custom_config: /home/rcherrueau/regions-manual-setup/patches
 
 patches:
