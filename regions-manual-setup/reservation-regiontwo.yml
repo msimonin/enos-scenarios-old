@@ -3,13 +3,12 @@
 # Grid'5000 reservation parameters                #
 # ############################################### #
 
-name: disco-region0
-walltime: "3:00:00"
+name: OpenStack/Enos/RegionTwo
+walltime: "1:45:00"
 # reservation: "2016-12-06 12:47:00"
 
 resources:
   paravance:
-  # parasilo:
     control: 1
 
 vlans:
@@ -20,7 +19,6 @@ vlans:
 # when nodes are missing in the reservation
 # or not deployed
 role_distribution: debug
-
 enable_monitoring: false
 
 # ############################################### #
@@ -28,52 +26,43 @@ enable_monitoring: false
 # ############################################### #
 
 # This will describe the topology of your services
-inventory: /home/rcherrueau/regions-manual-setup/inventory-region0
+inventory: /home/rcherrueau/enos-scenarios/regions-manual-setup/inventory
 
 # ############################################### #
 # docker registry parameters
 # ############################################### #
 registry:
   ceph: true
-  ceph_keyring: /home/discovery/.ceph/ceph.client.discovery.keyring
-  ceph_id: discovery
-  ceph_rbd: discovery_kolla_registry/datas
+  ceph_keyring: /home/rcherrueau/.ceph/ceph.client.rcherrueau.keyring
+  ceph_id: rcherrueau
+  ceph_rbd: rcherrueau_/docker_registry
 
 # ############################################### #
 # Kolla parameteres (globals.yml)                 #
 # ############################################### #
-kolla_branch: "3.0.1"
+kolla_repo: "https://github.com/rcherrueau/kolla-ansible.git"
+kolla_ref: "multi-regions"
 
 kolla:
   kolla_base_distro: "centos"
   kolla_install_type: "source"
-  openstack_release: "3.0.1"
   docker_namespace: "beyondtheclouds"
 
-  openstack_region_name: "Region0"
+  kolla_internal_fqdn_r1: 10.24.61.255
 
-  openstack_regions:
-    - "Region0"
-    - "Region1"
-    - "Region2"
+  keystone_admin_url: "{{ admin_protocol }}://{{ kolla_internal_fqdn_r1 }}:{{ keystone_admin_port }}/v3"
+  keystone_internal_url: "{{ internal_protocol }}://{{ kolla_internal_fqdn_r1 }}:{{ keystone_public_port }}/v3"
 
-  # enable_haproxy: false
-  # enable_keystone: false
-  # enable_memcached: false
-  enable_kibana: false
-  enable_elasticsearch: false
-  enable_glance: false
-  enable_neutron: false
-  enable_nova: false
-  enable_rabbitmq: false
+  openstack_auth:
+    auth_url: "{{ admin_protocol }}://{{ kolla_internal_fqdn_r1 }}:{{ keystone_admin_port }}"
+    username: "admin"
+    password: "{{ keystone_admin_password }}"
+    project_name: "admin"
 
-  enable_heat: false
+  openstack_region_name: "RegionTwo"
+
+  enable_keystone: "no"
+  enable_horizon: "no"
 
   # Patch files to support multi-region
-  node_custom_config: /home/rcherrueau/regions-manual-setup/patches
-
-patches:
-  - name: patches keyston to register n endpoint
-    src: /home/rcherrueau/regions-manual-setup/patches/register.yml
-    dst: kolla/ansible/roles/keystone/tasks/register.yml
-    enabled: true
+  node_custom_config: /home/rcherrueau/enos-scenarios/regions-manual-setup/patches

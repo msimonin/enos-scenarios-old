@@ -1,0 +1,18 @@
+#+TITLE: Multiple Regions Deployment
+
+Test a multiple regions deployment. This scenario is made for testing
+[[https://github.com/rcherrueau/kolla-ansible/tree/multi-regions][rcherrueau/kolla-ansible]].
+
+To execute this scenario, pull the current git repository on G5k. Then
+update =reservation-region*.yml= file so that the ~inventory~ and
+~node_custom_config~ parameter link the current directory. Then make
+an ~enos~ deployment with the =reservation-regionone.yml= as
+reservation file.
+
+: enos deploy -f ~/enos-scenario/region-manual-setup/reservation-regionone.yml
+
+At the end of the up, note the ~vip~ value and report it into
+=reservation-regiontwo.yml= at ~kolla-internal-fqdn-r1~. Then run the
+deployment of the second region.
+
+: enos deploy -f ~/enos-scenario/region-manual-setup/reservation-regiontwo.yml
