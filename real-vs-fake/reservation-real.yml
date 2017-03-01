@@ -1,0 +1,57 @@
+---
+# ############################################### #
+# Grid'5000 reservation parameters                #
+# ############################################### #
+
+name: OpenStack/Enos2/20Real
+walltime: "4:00:00"
+# reservation: "2017-03-01 15:29:00"
+
+resources:
+  parasilo:
+    control: 1
+    network: 1
+    monitoring: 1
+    compute: 5
+  paravance:
+    compute: 15
+
+vlans:
+  # mandatory : you need to have exacly one vlan
+  rennes: "{type='kavlan'}/vlan=1"
+
+# Be less strict on node distribution especially
+# when nodes are missing in the reservation
+# or not deployed
+role_distribution: debug
+enable_monitoring: true
+
+# ############################################### #
+# Inventory to use                                #
+# ############################################### #
+
+# This will describe the topology of your services
+inventory: /home/rcherrueau/enos-scenarios/real-vs-fake/inventory
+
+# ############################################### #
+# docker registry parameters
+# ############################################### #
+registry:
+  ceph: true
+  ceph_keyring: /home/rcherrueau/.ceph/ceph.client.rcherrueau.keyring
+  ceph_id: rcherrueau
+  ceph_rbd: rcherrueau_/docker_registry
+
+# ############################################### #
+# Kolla parameteres                               #
+# ############################################### #
+# Repository
+kolla_repo: "https://git.openstack.org/openstack/kolla"
+kolla_ref: "stable/newton"
+
+# globals.yml
+kolla:
+  kolla_base_distro: "centos"
+  kolla_install_type: "source"
+  docker_namespace: "beyondtheclouds"
+  enable_heat: "no"
