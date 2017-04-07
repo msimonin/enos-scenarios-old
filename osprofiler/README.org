@@ -1,0 +1,20 @@
+#+TITLE: Deployment with OSProfiler support
+
+Performs a deployment over vagrant/virtualbox and configures services
+to support [[https://docs.openstack.org/developer/osprofiler/][OSProfiler]].
+
+To execute this scenario, pull the current git repository on your
+system. Then update =reservation.yml= file so that the ~inventory~ and
+~patches~ parameter link the current directory. Then make
+an ~enos~ deployment with the =reservation.yml= as
+reservation file.
+
+: enos deploy -f ~/enos-scenario/all-in-one/reservation.yml
+
+Finally, make a trace from the host.
+
+: source current/admin-openrc
+: openstack hypervisor list --os-profiler SECRET_KEY
+
+This also works on G5k, but it requires to change the ~provider~ and
+~resources~ keys to be compliant with the G5k [[https://enos.readthedocs.io/en/latest/getting-started/grid5000.html][configuration]].
