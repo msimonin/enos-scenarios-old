@@ -16,5 +16,9 @@ Finally, make a trace from the host.
 : source current/admin-openrc
 : openstack hypervisor list --os-profiler SECRET_KEY
 
+Note that Keystone is not profiled. To activate it, change Keystone 
+=patches/keystone.conf= configuration file and set the ~enable~ key 
+to ~True~.
+
 This also works on G5k, but it requires to change the ~provider~ and
 ~resources~ keys to be compliant with the G5k [[https://enos.readthedocs.io/en/latest/getting-started/grid5000.html][configuration]].
