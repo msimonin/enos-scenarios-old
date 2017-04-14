@@ -5,20 +5,20 @@
 
 # Provider specific config
 provider:
-  name: Enos/WAN-cpt10-lat10
+  name: Enos/WAN-cpt1-lat10
   type: g5k
-  walltime: 06:00:00
+  walltime: 05:00:00
   vlans:
-    rennes: "{type='kavlan'}/vlan=1"
+    nancy: "{type='kavlan'}/vlan=1"
   role_distribution: debug
 
 # Resources description
 topology:
-  grp-control:
-    paravance:
+  grp1:
+    griffon:
       control: 1
-  grp-compute:
-    paravance:
+  grp2:
+    griffon:
       compute: 1
 
 network_constraints:
@@ -32,6 +32,20 @@ network_constraints:
 
 # Topology of your services
 inventory: /home/rcherrueau/enos-scenarios/wan/inventory
+
+os_env:
+  OS_PROJECT_DOMAIN_ID: default
+  OS_PROJECT_DOMAIN_NAME: default
+  OS_USER_DOMAIN_ID: default
+  OS_USER_DOMAIN_NAME: default
+  OS_PROJECT_NAME: admin
+  OS_TENANT_NAME: admin
+  OS_USERNAME: admin
+  OS_PASSWORD: demo
+  OS_AUTH_URL: "{{ keystone_admin_url }}"
+  OS_IDENTITY_API_VERSION: 3
+  OS_REGION_NAME: "{{ openstack_region_name }}"
+  OSPROFILER_CONNECTION_STRING: "mongodb://{{ kolla_internal_fqdn }}:{{ mongodb_port }}"
 
 # ############################################### #
 # docker registry parameters
@@ -78,3 +92,17 @@ kolla:
   # enable_panko: "yes"               # Default panko database is mysql
   # # - OSProfiler using mongodb
   enable_mongodb: "yes"
+
+  os_env:
+    OS_PROJECT_DOMAIN_ID: default
+    OS_PROJECT_DOMAIN_NAME: default
+    OS_USER_DOMAIN_ID: default
+    OS_USER_DOMAIN_NAME: default
+    OS_PROJECT_NAME: admin
+    OS_TENANT_NAME: admin
+    OS_USERNAME: admin
+    OS_PASSWORD: demo
+    OS_AUTH_URL: "{{ keystone_admin_url }}"
+    OS_IDENTITY_API_VERSION: 3
+    OS_REGION_NAME: "{{ openstack_region_name }}"
+    OSPROFILER_CONNECTION_STRING: "mongodb://{{ kolla_internal_fqdn }}:{{ mongodb_port }}"
