@@ -1,23 +1,40 @@
 ---
 # this is a sample of workload
-# prerequisite: 
+# prerequisite:
 # - we rely on the rally template mechanism
-# 
-rally: 
+#
+rally:
     enabled: true
-    args: 
+    args:
       concurrency:
         - 1
-      times: 
+      times:
         - 1
     scenarios:
-      - name: boot and delete servers 
-        file: boot-and-delete.yaml 
+      # Nova Scenarios
+      - name: boot and delete servers
+        file: nova/boot-and-delete.yaml
       - name: boot associate floating ip
-        file: boot-and-associate-floating-ip.yaml
+        file: nova/boot-and-associate-floating-ip.yaml
       - name: boot server and add security groups
-        # seems not relevant
-        file: boot-server-and-add-secgroup.yaml
+        file: nova/boot-server-and-add-secgroup.yaml
       - name: pause unpause
-        file: pause-and-unpause.yaml
-
+        file: nova/pause-and-unpause.yaml
+      # Neutron Scenarios
+      - name: create and delete network
+        file: neutron/create-and-delete-networks.yaml
+      - name: create and delete routers
+        file: neutron/create-and-delete-routers.yaml
+      - name: create and delete ports
+        file: neutron/create-and-delete-ports.yaml
+      - name: create and delete pools
+        file: neutron/create-and-delete-pools.yaml
+      - name: create and delete security groups
+        file: neutron/create-and-delete-security-groups.yaml
+      - name: create and delete subnets
+        file: neutron/create-and-delete-subnets.yaml
+      - name: create and delete vips
+        file: neutron/create-and-delete-vips.yaml
+      # Glance
+      - name: create and delete image
+        file: glance/create-and-delete-image.yaml
