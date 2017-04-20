@@ -1,0 +1,23 @@
+---
+# this is a sample of workload
+# prerequisite: 
+# - we rely on the rally template mechanism
+# 
+rally: 
+    enabled: true
+    args: 
+      concurrency:
+        - 1
+      times: 
+        - 1
+    scenarios:
+      - name: boot and delete servers 
+        file: boot-and-delete.yaml 
+      - name: boot associate floating ip
+        file: boot-and-associate-floating-ip.yaml
+      - name: boot server and add security groups
+        # seems not relevant
+        file: boot-server-and-add-secgroup.yaml
+      - name: pause unpause
+        file: pause-and-unpause.yaml
+
