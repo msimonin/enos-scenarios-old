@@ -5,45 +5,33 @@
 
 # Provider specific config
 provider:
-  name: Enos/WAN-cpt10-lat000
+  name: Enos/WAN-cpt10-lat000-100
   type: g5k
-  # walltime: "08:00:00"
-  walltime: "06:00:00"
-  # reservation: "2017-04-20 19:05:00"
+  walltime: "56:00:00"
+  reservation: "2017-04-21 19:30:00"
   vlans:
     grenoble: "{type='kavlan'}/vlan=1"
-    # rennes: "{type='kavlan'}/vlan=1"
   role_distribution: debug
 
 # Resources description
 topology:
   grp1:
     edel:
-      # paravance:
       control: 1
   grp2:
     edel:
-      # paravance:
-      compute: 10
+      compute: 1
 
 network_constraints:
   enable: false
   # enable: true
-  default_delay: 10ms
+  # default_delay: 10ms
   # default_delay: 25ms
   # default_delay: 50ms
   # default_delay: 100ms
-  # default_delay: 150ms
   default_rate: 40Gbit
 
 enable_monitoring: false
-
-# ############################################### #
-# Inventory to use                                #
-# ############################################### #
-
-# Topology of your services
-inventory: /home/rcherrueau/enos-scenarios/wan/inventory
 
 os_env:
   OS_PROJECT_DOMAIN_ID: default
@@ -58,6 +46,13 @@ os_env:
   OS_IDENTITY_API_VERSION: 3
   OS_REGION_NAME: "{{ openstack_region_name }}"
   OSPROFILER_CONNECTION_STRING: "mongodb://{{ kolla_internal_fqdn }}:{{ mongodb_port }}"
+
+# ############################################### #
+# Inventory to use                                #
+# ############################################### #
+
+# Topology of your services
+inventory: /home/rcherrueau/enos-scenarios/wan/inventory
 
 # ############################################### #
 # docker registry parameters
@@ -81,13 +76,10 @@ kolla_ref: stable/ocata
 
 # globals.yml
 kolla:
-  kolla_base_distro: centos
+  kolla_base_distro: ubuntu
   kolla_install_type: source
   docker_namespace: beyondtheclouds
   enable_heat: "no"
-
-  # -- OSProfiler Specific --
-
   # Containers with pymongo into the list of dependencies
   openstack_release: osprofiler-support
 
