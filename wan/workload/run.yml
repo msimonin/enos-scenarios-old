@@ -9,7 +9,7 @@ rally:
       concurrency:
         - 1
       times:
-        - 10
+        - 1
     scenarios:
       # Nova Scenarios
       - name: boot and delete servers
