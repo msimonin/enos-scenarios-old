@@ -21,6 +21,11 @@ rally:
       - name: pause unpause
         file: nova/pause-and-unpause.yaml
       # Neutron Scenarios
+      # Required Neutron lbaas extension
+      # - name: create and delete pools
+      #   file: neutron/create-and-delete-pools.yaml
+      # - name: create and delete vips
+      #   file: neutron/create-and-delete-vips.yaml
       - name: create and delete network
         file: neutron/create-and-delete-networks.yaml
       - name: create and delete routers
@@ -31,11 +36,6 @@ rally:
         file: neutron/create-and-delete-security-groups.yaml
       - name: create and delete subnets
         file: neutron/create-and-delete-subnets.yaml
-      # Required Neutron lbaas extension
-      # - name: create and delete pools
-      #   file: neutron/create-and-delete-pools.yaml
-      # - name: create and delete vips
-      #   file: neutron/create-and-delete-vips.yaml
       # Glance
       - name: create and delete image
         file: glance/create-and-delete-image.yaml

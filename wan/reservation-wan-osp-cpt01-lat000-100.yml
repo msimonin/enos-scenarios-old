@@ -7,8 +7,8 @@
 provider:
   name: Enos/WAN-cpt10-lat000-100
   type: g5k
-  walltime: "56:00:00"
-  reservation: "2017-04-21 19:30:00"
+  walltime: "41:00:00"
+  reservation: "2017-04-22 13:20:00"
   vlans:
     grenoble: "{type='kavlan'}/vlan=1"
   role_distribution: debug
@@ -20,7 +20,7 @@ topology:
       control: 1
   grp2:
     edel:
-      compute: 1
+      compute: 50
 
 network_constraints:
   enable: false
