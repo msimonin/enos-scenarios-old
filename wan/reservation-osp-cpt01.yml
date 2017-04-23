@@ -20,15 +20,11 @@ topology:
       control: 1
   grp2:
     edel:
-      compute: 50
+      compute: 1
 
 network_constraints:
-  enable: false
-  # enable: true
-  # default_delay: 10ms
-  # default_delay: 25ms
-  # default_delay: 50ms
-  # default_delay: 100ms
+  enable: true
+  default_delay: 0ms
   default_rate: 40Gbit
 
 enable_monitoring: false
