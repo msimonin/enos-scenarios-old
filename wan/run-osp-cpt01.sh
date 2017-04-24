@@ -19,6 +19,7 @@ python -m enos.enos init
 python -m enos.enos bench --workload="${WORKLOAD}"
 popd
 
+# Run experiments with all latencies
 for LTY in $LATENCIES; do
   OLD_RES_DIR=$(readlink "${ENOS_HOME}/current")
   NEW_RES_DIR="${EXP_HOME}/wan-osp-cpt01-lat${LTY}"
@@ -34,7 +35,7 @@ for LTY in $LATENCIES; do
   # Set the latency of the reservation.yml
   sed -i 's|default_delay: .\+|default_delay: '${LTY}'ms|' "${EXP_HOME}/reservation-osp-cpt01.yml"
 
-  # Run Enos with all
+  # Run Enos, setup latency, make test and bakcup results 
   pushd "${ENOS_HOME}"
   ENV=${NEW_RES_DIR}
   python -m enos.enos tc --env="${ENV}"

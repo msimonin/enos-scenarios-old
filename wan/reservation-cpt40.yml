@@ -5,9 +5,10 @@
 
 # Provider specific config
 provider:
-  name: Enos/WAN-cpt10
+  name: Enos/WAN-cpt40
   type: g5k
-  walltime: "13:00:00"
+  walltime: "13:55:00"
+  reservation: "2017-04-24 19:01:00"
   vlans:
     grenoble: "{type='kavlan'}/vlan=1"
   role_distribution: debug
@@ -20,11 +21,38 @@ topology:
   grp2:
     edel:
       compute: 10
+  grp3:
+    edel:
+      compute: 10
+  grp4:
+    edel:
+      compute: 10
+  grp5:
+    edel:
+      compute: 10
+
 
 network_constraints:
   enable: true
-  default_delay: 100ms
+  default_delay: 0ms
   default_rate: 40Gbit
+  constraints:
+    - src: grp1
+      dst: grp2
+      delay: 10ms
+      rate: 40Gbit
+    - src: grp1
+      dst: grp3
+      delay: 25ms
+      rate: 40Gbit
+    - src: grp1
+      dst: grp4
+      delay: 50ms
+      rate: 40Gbit
+    - src: grp1
+      dst: grp5
+      delay: 100ms
+      rate: 40Gbit
 
 enable_monitoring: true
 
@@ -47,7 +75,6 @@ registry:
     - ceph0.rennes.grid5000.fr
     - ceph1.rennes.grid5000.fr
     - ceph2.rennes.grid5000.fr
-
 
 # ############################################### #
 # Kolla parameteres                               #

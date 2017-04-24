@@ -11,6 +11,8 @@ ENOS_HOME="/home/${USER}/enos"
 EXP_HOME=$(pwd)
 WORKLOAD="${EXP_HOME}/workload-cpt10"
 
+trap 'exit' SIGINT
+
 # Run the experiment a first time to fill cache
 pushd "${ENOS_HOME}"
 python -m enos.enos up -f "${EXP_HOME}/reservation-cpt10.yml" --force-deploy
@@ -19,6 +21,7 @@ python -m enos.enos init
 python -m enos.enos bench --workload="${WORKLOAD}"
 popd
 
+# Run experiments with different latencies 
 for LTY in $LATENCIES; do
   OLD_RES_DIR=$(readlink "${ENOS_HOME}/current")
   NEW_RES_DIR="${EXP_HOME}/wan-cpt10-lat${LTY}"
@@ -34,7 +37,7 @@ for LTY in $LATENCIES; do
   # Set the latency of the reservation.yml
   sed -i 's|default_delay: .\+|default_delay: '${LTY}'ms|' "${EXP_HOME}/reservation-cpt10.yml"
 
-  # Run Enos with all
+  # Run Enos, setup latency, make test and backup results
   pushd "${ENOS_HOME}"
   ENV=${NEW_RES_DIR}
   python -m enos.enos tc --env="${ENV}"
