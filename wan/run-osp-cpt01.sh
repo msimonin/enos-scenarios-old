@@ -11,6 +11,8 @@ ENOS_HOME="/home/${USER}/enos"
 EXP_HOME=$(pwd)
 WORKLOAD="${EXP_HOME}/workload-osp-cpt01"
 
+trap 'exit' SIGINT
+
 # Run the experiment a first time to fill cache
 pushd "${ENOS_HOME}"
 python -m enos.enos up -f "${EXP_HOME}/reservation-osp-cpt01.yml" --force-deploy

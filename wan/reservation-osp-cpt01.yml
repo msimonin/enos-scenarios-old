@@ -5,10 +5,11 @@
 
 # Provider specific config
 provider:
-  name: Enos/WAN-cpt10-lat000-100
+  # name: Enos/WAN-cpt10-lat000-100
+  name: Enos/WAN-osp-cpt1
   type: g5k
-  walltime: "41:00:00"
-  reservation: "2017-04-22 13:20:00"
+  walltime: "09:00:00"
+  # reservation: "2017-04-24 23:33:00"
   vlans:
     grenoble: "{type='kavlan'}/vlan=1"
   role_distribution: debug
@@ -24,7 +25,7 @@ topology:
 
 network_constraints:
   enable: true
-  default_delay: 0ms
+  default_delay: 100ms
   default_rate: 40Gbit
 
 enable_monitoring: false

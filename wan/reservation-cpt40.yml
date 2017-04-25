@@ -7,8 +7,8 @@
 provider:
   name: Enos/WAN-cpt40
   type: g5k
-  walltime: "13:55:00"
-  reservation: "2017-04-24 19:01:00"
+  walltime: "13:58:00"
+  reservation: "2017-04-25 19:01:00"
   vlans:
     grenoble: "{type='kavlan'}/vlan=1"
   role_distribution: debug
@@ -30,7 +30,6 @@ topology:
   grp5:
     edel:
       compute: 10
-
 
 network_constraints:
   enable: true
@@ -63,8 +62,8 @@ enable_monitoring: true
 # Topology of your services
 inventory: /home/rcherrueau/enos-scenarios/wan/inventory
 
-# ############################################### #
-# docker registry parameters
+# ############################################### # 
+# Docker registry parameters                      #
 # ############################################### #
 registry:
   ceph: true
