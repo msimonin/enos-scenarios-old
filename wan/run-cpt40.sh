@@ -10,6 +10,9 @@ ENOS_HOME="/home/${USER}/enos"
 EXP_HOME=$(pwd)
 WORKLOAD="${EXP_HOME}/workload-cpt40"
 
+# Limit the number parallel ssh execution to 25
+# otherwise Docker registry produces timeout 
+# during containers pulling.
 export ANSIBLE_CONFIG="${EXP_HOME}/ansible.cfg"
 
 trap 'exit' SIGINT
