@@ -5,9 +5,9 @@
 
 # Provider specific config
 provider:
-  name: Enos/WAN-cpt10
+  name: Enos/WAN-cpt40
   type: g5k
-  walltime: "13:00:00"
+  walltime: "61:59:00"
   vlans:
     rennes: "{type='kavlan'}/vlan=1"
   role_distribution: debug
@@ -24,6 +24,7 @@ topology:
 network_constraints:
   enable: true
   default_delay: 0ms
+  default_loss: 0%
   default_rate: 40Gbit
 
 enable_monitoring: true
@@ -48,7 +49,6 @@ registry:
     - ceph1.rennes.grid5000.fr
     - ceph2.rennes.grid5000.fr
 
-
 # ############################################### #
 # Kolla parameteres                               #
 # ############################################### #
@@ -62,5 +62,4 @@ kolla:
   kolla_install_type: source
   docker_namespace: beyondtheclouds
   enable_heat: "no"
-  openstack_release: osprofiler-support
 
