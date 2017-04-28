@@ -5,30 +5,35 @@
 
 set -x
 
-# Configuration Parameters
+# Experience Parameters
 LATENCIES='0 10 25 50 100'
-ENOS_HOME="/home/${USER}/enos"
+ENOS_GIT='https://github.com/rcherrueau/enos.git'
+ENOS_REF='master'
+
 EXP_HOME=$(pwd)
-WORKLOAD="${EXP_HOME}/workload-cpt10"
+ENOS_HOME="${EXP_HOME}/enos"
+WORKLOAD="${EXP_HOME}/workload"
 
 trap 'exit' SIGINT
 
 
-# Setup the Virtual environment (if none)
-pushd "${ENOS_HOME}"
-if [ ! -d venv ]; then
+# Get Enos and setup the Virtual environment (if none)
+if [ ! -d "${ENOS_HOME}" ]; then
+  git clone "${ENOS_GIT}" --depth 1 --branch "${ENOS_REF}" "${ENOS_HOME}" 
+
+  pushd "${ENOS_HOME}"
   virtualenv --python=python2.7 venv
   . venv/bin/activate
   pip install -r requirements.txt
+  popd
 fi
 
-. venv/bin/activate
-popd
+. "${ENOS_HOME}/venv/bin/activate"
 
 
 # Run the experiment a first time to fill cache
 pushd "${ENOS_HOME}"
-python -m enos.enos up -f "${EXP_HOME}/reservation-cpt10.yml" --force-deploy
+python -m enos.enos up -f "${EXP_HOME}/reservation.yml" --force-deploy
 python -m enos.enos os
 python -m enos.enos init
 python -m enos.enos bench --workload="${WORKLOAD}"
@@ -47,7 +52,7 @@ for LTY in $LATENCIES; do
   sed -i 's|'${OLD_RES_DIR}'|'${NEW_RES_DIR}'|' "${NEW_RES_DIR}/env"
 
   # Set the latency of the reservation.yml
-  sed -i 's|default_delay: .\+|default_delay: '${LTY}'ms|' "${EXP_HOME}/reservation-cpt10.yml"
+  sed -i 's|default_delay: .\+|default_delay: '${LTY}'ms|' "${EXP_HOME}/reservation.yml"
 
   # Run Enos, setup latency, make test and backup results
   pushd "${ENOS_HOME}"

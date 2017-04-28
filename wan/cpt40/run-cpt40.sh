@@ -5,10 +5,13 @@
 
 set -x
 
-# Configuration Parameters
-ENOS_HOME="/home/${USER}/enos"
+# Experience Parameters
+ENOS_GIT='https://github.com/rcherrueau/enos.git'
+ENOS_REF='osprofiler'
+
 EXP_HOME=$(pwd)
-WORKLOAD="${EXP_HOME}/workload-cpt40"
+ENOS_HOME="${EXP_HOME}/enos"
+WORKLOAD="${EXP_HOME}/workload"
 
 # Note: ANSIBLE_CONFIG limits the number parallel ssh execution to 25
 # otherwise Docker registry produces timeout 
@@ -17,21 +20,23 @@ WORKLOAD="${EXP_HOME}/workload-cpt40"
 trap 'exit' SIGINT
 
 
-# Setup the Virtual environment (if none)
-pushd "${ENOS_HOME}"
-if [ ! -d venv ]; then
+# Get Enos and setup the Virtual environment (if none)
+if [ ! -d "${ENOS_HOME}" ]; then
+  git clone "${ENOS_GIT}" --depth 1 --branch "${ENOS_REF}" "${ENOS_HOME}" 
+
+  pushd "${ENOS_HOME}"
   virtualenv --python=python2.7 venv
   . venv/bin/activate
   pip install -r requirements.txt
+  popd
 fi
 
-. venv/bin/activate
-popd
+. "${ENOS_HOME}/venv/bin/activate"
 
 
 # Run the experiment a first time to fill cache
 pushd "${ENOS_HOME}"
-ANSIBLE_CONFIG="${EXP_HOME}/ansible.cfg" python -m enos.enos up -f "${EXP_HOME}/reservation-cpt40.yml" --force-deploy
+ANSIBLE_CONFIG="${EXP_HOME}/ansible.cfg" python -m enos.enos up -f "${EXP_HOME}/reservation.yml" --force-deploy
 ANSIBLE_CONFIG="${EXP_HOME}/ansible.cfg" python -m enos.enos os
 ANSIBLE_CONFIG="${EXP_HOME}/ansible.cfg" python -m enos.enos init
 ANSIBLE_CONFIG="${EXP_HOME}/ansible.cfg" python -m enos.enos bench --workload="${WORKLOAD}"
