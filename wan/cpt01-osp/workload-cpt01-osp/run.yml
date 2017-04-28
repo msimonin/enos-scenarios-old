@@ -14,12 +14,16 @@ rally:
       # Nova Scenarios
       - name: boot and delete servers
         file: nova/boot-and-delete.yaml
+        osprofiler: true
       - name: boot associate floating ip
         file: nova/boot-and-associate-floating-ip.yaml
+        osprofiler: true
       - name: boot server and add security groups
         file: nova/boot-server-and-add-secgroup.yaml
+        osprofiler: true
       - name: pause unpause
         file: nova/pause-and-unpause.yaml
+        osprofiler: true
       # Neutron Scenarios
       # Required Neutron lbaas extension
       # - name: create and delete pools
@@ -28,14 +32,20 @@ rally:
       #   file: neutron/create-and-delete-vips.yaml
       - name: create and delete network
         file: neutron/create-and-delete-networks.yaml
+        osprofiler: true
       - name: create and delete routers
         file: neutron/create-and-delete-routers.yaml
+        osprofiler: true
       - name: create and delete ports
         file: neutron/create-and-delete-ports.yaml
+        osprofiler: true
       - name: create and delete security groups
         file: neutron/create-and-delete-security-groups.yaml
+        osprofiler: true
       - name: create and delete subnets
         file: neutron/create-and-delete-subnets.yaml
+        osprofiler: true
       # Glance
       - name: create and delete image
         file: glance/create-and-delete-image.yaml
+        osprofiler: true

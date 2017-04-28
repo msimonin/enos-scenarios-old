@@ -5,53 +5,26 @@
 
 # Provider specific config
 provider:
-  name: Enos/WAN-cpt40
+  name: Enos/WAN-cpt10
   type: g5k
-  walltime: "13:58:00"
-  reservation: "2017-04-25 19:01:00"
+  walltime: "13:00:00"
   vlans:
-    grenoble: "{type='kavlan'}/vlan=1"
+    rennes: "{type='kavlan'}/vlan=1"
   role_distribution: debug
 
 # Resources description
 topology:
   grp1:
-    edel:
+    parasilo:
       control: 1
   grp2:
-    edel:
-      compute: 10
-  grp3:
-    edel:
-      compute: 10
-  grp4:
-    edel:
-      compute: 10
-  grp5:
-    edel:
+    parasilo:
       compute: 10
 
 network_constraints:
   enable: true
   default_delay: 0ms
   default_rate: 40Gbit
-  constraints:
-    - src: grp1
-      dst: grp2
-      delay: 10ms
-      rate: 40Gbit
-    - src: grp1
-      dst: grp3
-      delay: 25ms
-      rate: 40Gbit
-    - src: grp1
-      dst: grp4
-      delay: 50ms
-      rate: 40Gbit
-    - src: grp1
-      dst: grp5
-      delay: 100ms
-      rate: 40Gbit
 
 enable_monitoring: true
 
@@ -62,8 +35,8 @@ enable_monitoring: true
 # Topology of your services
 inventory: /home/rcherrueau/enos-scenarios/wan/inventory
 
-# ############################################### # 
-# Docker registry parameters                      #
+# ############################################### #
+# docker registry parameters
 # ############################################### #
 registry:
   ceph: true
@@ -74,6 +47,7 @@ registry:
     - ceph0.rennes.grid5000.fr
     - ceph1.rennes.grid5000.fr
     - ceph2.rennes.grid5000.fr
+
 
 # ############################################### #
 # Kolla parameteres                               #

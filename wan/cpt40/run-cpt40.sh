@@ -10,10 +10,9 @@ ENOS_HOME="/home/${USER}/enos"
 EXP_HOME=$(pwd)
 WORKLOAD="${EXP_HOME}/workload-cpt40"
 
-# Limit the number parallel ssh execution to 25
+# Note: ANSIBLE_CONFIG limits the number parallel ssh execution to 25
 # otherwise Docker registry produces timeout 
 # during containers pulling.
-export ANSIBLE_CONFIG="${EXP_HOME}/ansible.cfg"
 
 trap 'exit' SIGINT
 
@@ -32,31 +31,29 @@ popd
 
 # Run the experiment a first time to fill cache
 pushd "${ENOS_HOME}"
-python -m enos.enos up -f "${EXP_HOME}/reservation-cpt40.yml" --force-deploy
-python -m enos.enos os
-python -m enos.enos init
-python -m enos.enos bench --workload="${WORKLOAD}"
+ANSIBLE_CONFIG="${EXP_HOME}/ansible.cfg" python -m enos.enos up -f "${EXP_HOME}/reservation-cpt40.yml" --force-deploy
+ANSIBLE_CONFIG="${EXP_HOME}/ansible.cfg" python -m enos.enos os
+ANSIBLE_CONFIG="${EXP_HOME}/ansible.cfg" python -m enos.enos init
+ANSIBLE_CONFIG="${EXP_HOME}/ansible.cfg" python -m enos.enos bench --workload="${WORKLOAD}"
 popd
 
 
 # Run experiment a second time and save results
 OLD_RES_DIR=$(readlink "${ENOS_HOME}/current")
-NEW_RES_DIR="${EXP_HOME}/wan-cpt40"
+NEW_RES_DIR="${EXP_HOME}/cpt40"
 
 # Construct the repository for the new experiment
 cp -r "${OLD_RES_DIR}" "${NEW_RES_DIR}"
-rm "${ENOS_HOME}/current"
-ln -s "${NEW_RES_DIR}" "${ENOS_HOME}/current"
 
-# Setup the environment with the location of the new folder
+# Update the environment with the location of the new experiment
 sed -i 's|'${OLD_RES_DIR}'|'${NEW_RES_DIR}'|' "${NEW_RES_DIR}/env"
 
 # Run Enos, set latencies, make test and backup results
 pushd "${ENOS_HOME}"
 ENV=${NEW_RES_DIR}
-python -m enos.enos tc --env="${ENV}"
-python -m enos.enos tc --test --env="${ENV}"
-python -m enos.enos bench --workload="${WORKLOAD}" --env="${ENV}"
-python -m enos.enos backup --env="${ENV}"
+ANSIBLE_CONFIG="${EXP_HOME}/ansible.cfg" python -m enos.enos tc --env="${ENV}"
+ANSIBLE_CONFIG="${EXP_HOME}/ansible.cfg" python -m enos.enos tc --test --env="${ENV}"
+ANSIBLE_CONFIG="${EXP_HOME}/ansible.cfg" python -m enos.enos bench --workload="${WORKLOAD}" --env="${ENV}"
+ANSIBLE_CONFIG="${EXP_HOME}/ansible.cfg" python -m enos.enos backup --env="${ENV}"
 popd
 
