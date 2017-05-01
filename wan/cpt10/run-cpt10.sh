@@ -8,8 +8,8 @@ set -x
 # Experience Parameters
 LATENCIES='0 10 25 50 100'
 LOSSES='0 0.1 1 10 25'
-ENOS_GIT='https://github.com/BeyondTheClouds/enos.git'
-ENOS_REF='master'
+ENOS_GIT='https://github.com/rcherrueau/enos.git'
+ENOS_REF='osprofiler'
 
 EXP_HOME=$(pwd)
 ENOS_HOME="${EXP_HOME}/enos"

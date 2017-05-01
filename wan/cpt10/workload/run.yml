@@ -37,5 +37,5 @@ rally:
       - name: create and delete subnets
         file: neutron/create-and-delete-subnets.yaml
       # Glance
-      - name: create and delete image
-        file: glance/create-and-delete-image.yaml
+      # - name: create and delete image
+      #   file: glance/create-and-delete-image.yaml

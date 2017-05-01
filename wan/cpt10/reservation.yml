@@ -5,12 +5,14 @@
 
 # Provider specific config
 provider:
-  name: Enos/WAN-cpt40
+  name: Enos/WAN-cpt10.2
   type: g5k
-  walltime: "61:59:00"
+  walltime: "13:59:00"
+  reservation: "2017-05-03 19:00:01"
   vlans:
     rennes: "{type='kavlan'}/vlan=1"
   role_distribution: debug
+  single_interface: true
 
 # Resources description
 topology:
@@ -23,11 +25,11 @@ topology:
 
 network_constraints:
   enable: true
-  default_delay: 0ms
-  default_loss: 0%
+  default_delay: 100ms
+  default_loss: 25%
   default_rate: 40Gbit
 
-enable_monitoring: true
+enable_monitoring: false
 
 # ############################################### #
 # Inventory to use                                #
@@ -53,13 +55,16 @@ registry:
 # Kolla parameteres                               #
 # ############################################### #
 # Repository
-kolla_repo: https://git.openstack.org/openstack/kolla-ansible
+# kolla_repo: https://git.openstack.org/openstack/kolla-ansible
+kolla_repo: https://github.com/openstack/kolla-ansible
 kolla_ref: stable/ocata
 
 # globals.yml
 kolla:
   kolla_base_distro: centos
   kolla_install_type: source
+  openstack_release: osprofiler-support
   docker_namespace: beyondtheclouds
   enable_heat: "no"
 
+rally_pip: git+https://github.com/rcherrueau/rally@osprofiler-support#egg=rally
