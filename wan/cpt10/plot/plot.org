@@ -1,0 +1,45 @@
+#+TITLE: Plot values
+
+# Doc: https://org-babel.readthedocs.io/en/latest
+
+* Bit Rate Reference
+See [[http://enos.irisa.fr/html/wan/cpt10/][cpt10-lat*-los0/*.stats]] for raw measures.
+
+#+NAME: bitrate-values
+| Latency (ms) | Bit Rate (Mbits/s) |
+|--------------+--------------------|
+|     0.150614 |        9410.991784 |
+|    20.100117 |        1206.381685 |
+|    50.100000 |         480.173601 |
+|   100.000000 |         234.189943 |
+|   200.000000 |         115.890071 |
+
+#+NAME: bitrate-ref
+#+HEADER: :results file :export code
+#+BEGIN_SRC python :var data=bitrate-values
+import matplotlib.pyplot as plt
+
+latencies = [ l/2. for [l, _] in data ] # x
+bitrates  = [ b for [_, b] in data ]    # y
+pdf = plt.figure()
+
+plt.plot(latencies, bitrates, marker='+')
+plt.xlabel("Latency (ms)")
+plt.ylabel("Bit Rate (Mbits/s)")
+plt.title("Bit Rate Reference")
+
+plt.show()
+pdf.savefig('biterate-ref.pdf')
+return 'biterate-ref.pdf'
+#+END_SRC
+
+#+RESULTS: bitrate-ref
+[[file:biterate-ref.pdf]]
+
+
+* Rally performance tests
+** loss 0
+
+| Expé Name | 0 | 10 | 25 | 50 | 100 |
+|-----------+---+----+----+----+-----|
+|           |   |    |    |    |     |
