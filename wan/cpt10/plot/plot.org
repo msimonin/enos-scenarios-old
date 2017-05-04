@@ -1,45 +1,150 @@
 #+TITLE: Plot values
+#+AUTHOR: Ronan-Alexandre Cherrueau
+#+EMAIL:  (λx.λy.x@y) Ronan-Alexandre.Cherrueau inria.fr
+#+LANGUAGE: en
 
 # Doc: https://org-babel.readthedocs.io/en/latest
 
-* Bit Rate Reference
+* Throughput Expectations
 See [[http://enos.irisa.fr/html/wan/cpt10/][cpt10-lat*-los0/*.stats]] for raw measures.
 
-#+NAME: bitrate-values
-| Latency (ms) | Bit Rate (Mbits/s) |
-|--------------+--------------------|
-|     0.150614 |        9410.991784 |
-|    20.100117 |        1206.381685 |
-|    50.100000 |         480.173601 |
-|   100.000000 |         234.189943 |
-|   200.000000 |         115.890071 |
+#+NAME: throughput-data
+| Latency (ms) | Throughput (Mbits/s) |
+|--------------+----------------------|
+|     0.150614 |          9410.991784 |
+|    20.000000 |          1206.381685 |
+|    50.000000 |           480.173601 |
+|   100.000000 |           234.189943 |
+|   200.000000 |           115.890071 |
 
-#+NAME: bitrate-ref
+#+NAME: throughput-ref
 #+HEADER: :results file :export code
-#+BEGIN_SRC python :var data=bitrate-values
+#+BEGIN_SRC python :var data=throughput-data
 import matplotlib.pyplot as plt
 
-latencies = [ l/2. for [l, _] in data ] # x
-bitrates  = [ b for [_, b] in data ]    # y
-pdf = plt.figure()
+latencies   = [ l/2. for [l, _] in data ] # x
+throughputs = [ b for [_, b] in data ]    # y
+img = plt.figure()
 
-plt.plot(latencies, bitrates, marker='+')
+plt.plot(latencies, throughputs, marker='+')
 plt.xlabel("Latency (ms)")
-plt.ylabel("Bit Rate (Mbits/s)")
-plt.title("Bit Rate Reference")
+plt.ylabel("Throughput (Mbits/s)")
+plt.title("Throughput Expectations")
 
 plt.show()
-pdf.savefig('biterate-ref.pdf')
-return 'biterate-ref.pdf'
+img.savefig('biterate-ref.png')
+img.savefig('biterate-ref.pdf')
+img.savefig('biterate-ref.svg')
+return 'biterate-ref.svg'
 #+END_SRC
 
-#+RESULTS: bitrate-ref
-[[file:biterate-ref.pdf]]
+#+RESULTS: throughput-ref
+[[file:biterate-ref.svg]]
+
+* Rally performance tests with different latencies
+:PROPERTIES:
+:header-args: :session latencies
+:END:
+
+#+NAME: requests
+#+BEGIN_SRC python
+import requests
+import requests_file
+
+# Experiment URL could also be an url, e.g, http://enos.irisa.fr/html/wan/cpt10
+experiments_url="file:///home/rfish/prog/inria-perso/rsc/cpt10"
+
+latencies = [ 0, 10, 25, 50, 100 ]
+
+req = requests.Session()
+if experiments_url.startswith('file://'):
+  req.mount('file://', requests_file.FileAdapter())
+#+END_SRC
+
+#+RESULTS: requests
+
+Experimentation done during the test are:
+#+NAME: experiments
+#+CAPTION: List of Experiments used
+| Experiment Name              | Experiment file                        |
+|------------------------------+----------------------------------------|
+| Boot & Associate Floating IP | boot-and-associate-floating-ip.yaml    |
+| Boot & Delete Server         | boot-and-delete.yaml                   |
+| Boot & Add Sec. Group        | boot-server-and-add-secgroup.yaml      |
+| Pause & Unpause server       | pause-and-unpause.yaml                 |
+| Create & Delete Networks     | create-and-delete-networks.yaml        |
+| Create & Delete Ports        | create-and-delete-ports.yaml           |
+| Create & Delete Routers      | create-and-delete-routers.yaml         |
+| Create & Delete Sec. Groups  | create-and-delete-security-groups.yaml |
+| Create & Delete Subnets      | create-and-delete-subnets.yaml         |
+
+** Packet Loss 0%
+#+NAME: latencies-perf-data
+#+HEADER: :export code :colnames '("Exp Name" "Oms" "10ms" "25ms" "50ms" "100ms")
+#+BEGIN_SRC python :var experiments=experiments
+import numpy as np
+import objectpath as op
+import operator
+
+def mk_exp_url(latency, experiment_file):
+  return "%s/cpt10-lat%s-los0/root/rally_home/rally-%s.json" % (experiments_url, latency, experiment_file)
+
+def mk_results(results):
+  durations = list(op.Tree(results).execute('$.duration'))
+  errors = list(op.Tree(results).execute('$.error'))
+  p_errors  = len(filter(operator.truth, errors)) / float(len(errors)) * 100.0
+  mean = np.average(durations)
+  std  = np.std(durations)
+  return (mean, std, p_errors)
+
+def pprint_measures(m):
+  return "(%05.2f %05.2f %d)" % m
 
 
-* Rally performance tests
-** loss 0
+exps = [ [n] + [ mk_results(list(op.Tree(req.get(mk_exp_url(l, u)).json()).execute('$..result'))) for l in latencies ] for [n,u] in experiments ]
 
-| Expé Name | 0 | 10 | 25 | 50 | 100 |
-|-----------+---+----+----+----+-----|
-|           |   |    |    |    |     |
+
+[ [n, pprint_measures(m0), pprint_measures(m10), pprint_measures(m25), pprint_measures(m50), pprint_measures(m100) ] for [n, m0, m10, m25, m50, m100] in exps ]
+
+#+END_SRC
+
+#+RESULTS: latencies-perf-data
+| Exp Name                     | Oms             | 10ms            | 25ms            | 50ms            | 100ms           |
+|------------------------------+-----------------+-----------------+-----------------+-----------------+-----------------|
+| Boot & Associate Floating IP | (15.48 02.67 0) | (17.20 01.98 0) | (18.26 02.35 0) | (20.63 02.08 0) | (25.61 02.20 0) |
+| Boot & Delete Server         | (15.13 01.07 0) | (17.85 01.53 0) | (20.34 00.73 5) | (23.77 00.97 5) | (30.86 03.26 0) |
+| Boot & Add Sec. Group        | (65.83 02.03 0) | (65.55 01.87 0) | (66.00 02.70 0) | (68.46 02.02 0) | (73.57 03.47 0) |
+| Pause & Unpause server       | (17.25 00.96 0) | (19.46 01.28 0) | (22.17 00.90 0) | (24.62 01.00 0) | (28.86 01.24 0) |
+| Create & Delete Networks     | (01.34 00.13 0) | (01.33 00.10 0) | (01.31 00.13 0) | (01.33 00.13 0) | (01.36 00.13 0) |
+| Create & Delete Ports        | (21.12 00.64 0) | (20.92 00.58 0) | (21.31 00.54 0) | (21.05 00.76 0) | (20.99 00.60 0) |
+| Create & Delete Routers      | (12.00 00.27 0) | (11.80 00.32 0) | (12.16 00.38 0) | (11.98 00.37 0) | (11.74 00.39 0) |
+| Create & Delete Sec. Groups  | (00.66 00.08 0) | (00.63 00.11 0) | (00.64 00.12 0) | (00.66 00.12 0) | (00.61 00.06 0) |
+| Create & Delete Subnets      | (02.96 00.26 0) | (03.10 00.38 0) | (02.98 00.34 0) | (02.92 00.30 0) | (02.96 00.39 0) |
+
+#+NAME: latencies-perf
+#+HEADER: :results file :export code
+#+BEGIN_SRC python
+import matplotlib.pyplot as plt
+
+def execution_time(m):
+  return m[0]
+
+img = plt.figure()
+
+for exp in exps[:4]: # Only select Nova tests
+  plt.plot(latencies, map(execution_time, exp[1:]), marker='+', label=exp[0])
+
+plt.xlabel("Latency (ms)")
+plt.legend(loc='center left')
+plt.ylabel("Execution Time (s)")
+# plt.title("Bit Rate Reference")
+
+plt.show()
+img.savefig('latencies-perf.png')
+img.savefig('latencies-perf.pdf')
+img.savefig('latencies-perf.svg')
+'latencies-perf.svg'
+#+END_SRC
+
+#+RESULTS: latencies-perf
+[[file:latencies-perf.svg]]
