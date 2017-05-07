@@ -2,13 +2,19 @@
 #+AUTHOR: Ronan-Alexandre Cherrueau
 #+EMAIL:  (λx.λy.x@y) Ronan-Alexandre.Cherrueau inria.fr
 #+LANGUAGE: en
+#+PROPERTY: header-args :session
+
+# Some configuration variables
+# Experiment URL is weather a file or http url, e.g, http://enos.irisa.fr/html/wan
 
 # Doc: https://org-babel.readthedocs.io/en/latest
 
 * Throughput Expectations
+
 See [[http://enos.irisa.fr/html/wan/cpt10/][cpt10-lat*-los0/*.stats]] for raw measures.
 
 #+NAME: throughput-data
+#+CAPTION: Throughput Expectations
 | Latency (ms) | Throughput (Mbits/s) |
 |--------------+----------------------|
 |     0.150614 |          9410.991784 |
@@ -18,123 +24,167 @@ See [[http://enos.irisa.fr/html/wan/cpt10/][cpt10-lat*-los0/*.stats]] for raw me
 |   200.000000 |           115.890071 |
 
 #+NAME: throughput-ref
-#+HEADER: :results file :export code
-#+BEGIN_SRC python :var data=throughput-data
+#+HEADER: :results file
+#+BEGIN_SRC python :var throughput_data=throughput-data
 import matplotlib.pyplot as plt
 
-latencies   = [ l/2. for [l, _] in data ] # x
-throughputs = [ b for [_, b] in data ]    # y
+# Accessors to throughput_data
+def latency(l):
+    return l[0]
+
+def throughput(l):
+    return l[1]
+
+latencies   = map(latency, throughput_data)
+throughputs = map(throughput, throughput_data)
 img = plt.figure()
 
-plt.plot(latencies, throughputs, marker='+')
-plt.xlabel("Latency (ms)")
+plt.plot(latencies, throughputs, '--',
+         marker='+', label='Throughput Expectations',
+         linewidth=1, color='#FF5722')
+plt.xlabel("RTT Latency (ms)")
 plt.ylabel("Throughput (Mbits/s)")
-plt.title("Throughput Expectations")
+# plt.title("Throughput Expectations")
+plt.legend(loc='upper right')
 
 plt.show()
 img.savefig('biterate-ref.png')
 img.savefig('biterate-ref.pdf')
 img.savefig('biterate-ref.svg')
-return 'biterate-ref.svg'
+
+'biterate-ref.svg'
 #+END_SRC
 
 #+RESULTS: throughput-ref
 [[file:biterate-ref.svg]]
 
-* Rally performance tests with different latencies
-:PROPERTIES:
-:header-args: :session latencies
-:END:
 
-#+NAME: requests
-#+BEGIN_SRC python
+* Latency Impact
+  :PROPERTIES:
+  :header-args: :var exps_url="file:///home/rfish/prog/inria-perso/rsc" :session
+  :END:
+
+Experimentation done during the test are:
+#+NAME: experiments_metadata
+#+CAPTION: List of Performed Experiments
+| Experiment Name              | File                                   | Type           |
+|------------------------------+----------------------------------------+----------------|
+| Boot & Associate Floating IP | boot-and-associate-floating-ip.yaml    | Rally Nova     |
+| Boot & Delete Server         | boot-and-delete.yaml                   | Rally Nova     |
+| Boot & Add Sec. Group        | boot-server-and-add-secgroup.yaml      | Rally Nova     |
+| Pause & Unpause server       | pause-and-unpause.yaml                 | Rally Nova     |
+| Create & Delete Networks     | create-and-delete-networks.yaml        | Rally Neutron  |
+| Create & Delete Ports        | create-and-delete-ports.yaml           | Rally Neutron  |
+| Create & Delete Routers      | create-and-delete-routers.yaml         | Rally Neutron  |
+| Create & Delete Sec. Groups  | create-and-delete-security-groups.yaml | Rally Neutron  |
+| Create & Delete Subnets      | create-and-delete-subnets.yaml         | Rally Neutron  |
+| L2 Full                      | opentsack_full_l2                      | Shaker Neutron |
+| L3 Dense East/West           | openstack_dense_l3_east_west           | Shaker Neutron |
+| L3 Full East/West            | openstack_full_l3_east_west            | Shaker Neutron |
+
+** Utils                                                           :noexport:
+#+NAME: utils-req
+#+BEGIN_SRC python :results silent
 import requests
 import requests_file
 
-# Experiment URL could also be an url, e.g, http://enos.irisa.fr/html/wan/cpt10
-experiments_url="file:///home/rfish/prog/inria-perso/rsc/cpt10"
+# Object to download experiment results
+_req = requests.Session()
+if exps_url.startswith('file://'):
+    _req.mount('file://', requests_file.FileAdapter())
 
-latencies = [ 0, 10, 25, 50, 100 ]
+# Accessors to experiments_metadata
+def exp_name(l):
+    return l[0]
 
-req = requests.Session()
-if experiments_url.startswith('file://'):
-  req.mount('file://', requests_file.FileAdapter())
+def exp_file(l):
+    return l[1]
+
+def is_rally(l):
+    return l[2].startswith('Rally')
+
+def is_shaker(l):
+    return l[2].startswith('Shaker')
+
+def is_nova(l):
+    return l[2].endswith('Nova')
+
+def is_neutron(l):
+    return l[2].endswith('Neutron')
 #+END_SRC
 
-#+RESULTS: requests
-
-Experimentation done during the test are:
-#+NAME: experiments
-#+CAPTION: List of Experiments used
-| Experiment Name              | Experiment file                        |
-|------------------------------+----------------------------------------|
-| Boot & Associate Floating IP | boot-and-associate-floating-ip.yaml    |
-| Boot & Delete Server         | boot-and-delete.yaml                   |
-| Boot & Add Sec. Group        | boot-server-and-add-secgroup.yaml      |
-| Pause & Unpause server       | pause-and-unpause.yaml                 |
-| Create & Delete Networks     | create-and-delete-networks.yaml        |
-| Create & Delete Ports        | create-and-delete-ports.yaml           |
-| Create & Delete Routers      | create-and-delete-routers.yaml         |
-| Create & Delete Sec. Groups  | create-and-delete-security-groups.yaml |
-| Create & Delete Subnets      | create-and-delete-subnets.yaml         |
-
-** Packet Loss 0%
-#+NAME: latencies-perf-data
-#+HEADER: :export code :colnames '("Exp Name" "Oms" "10ms" "25ms" "50ms" "100ms")
-#+BEGIN_SRC python :var experiments=experiments
+** Control Plane Results (Rally)
+#+NAME: rally-latencies-perf-data
+#+HEADER: :colnames '("Exp Name" "Oms" "20ms" "50ms" "100ms" "200ms")
+#+BEGIN_SRC python :var experiments_metadata=experiments_metadata
 import numpy as np
 import objectpath as op
 import operator
 
-def mk_exp_url(latency, experiment_file):
-  return "%s/cpt10-lat%s-los0/root/rally_home/rally-%s.json" % (experiments_url, latency, experiment_file)
+def rally_url(lat, file):
+    """Produces the url to download the json rally report.
 
-def mk_results(results):
-  durations = list(op.Tree(results).execute('$.duration'))
-  errors = list(op.Tree(results).execute('$.error'))
-  p_errors  = len(filter(operator.truth, errors)) / float(len(errors)) * 100.0
+    `lat`  is the latency as provided in throughput_data.
+    `file` is the json report name, as in `rally-<file>.json`.
+    """
+    return "%s/cpt10/cpt10-lat%s-los0/root/rally_home/rally-%s.json"\
+           % (exps_url, int(lat/2), file)
+
+def compute_perfs(json):
+  durations = list(op.Tree(json).execute('$..result.duration'))
   mean = np.average(durations)
   std  = np.std(durations)
-  return (mean, std, p_errors)
+  errors = list(op.Tree(json).execute('$..result.error'))
+  p_errors  = len(filter(operator.truth, errors)) / float(len(errors)) * 100.0
+  return  (mean, std, p_errors)
 
-def pprint_measures(m):
-  return "(%05.2f %05.2f %d)" % m
+perfs_rally = [ [exp_name(e)] + [ compute_perfs(_req.get(rally_url(l, exp_file(e))).json())
+                for l in map(int, latencies) ]
+                for e in experiments_metadata if is_rally(e) ]
 
-
-exps = [ [n] + [ mk_results(list(op.Tree(req.get(mk_exp_url(l, u)).json()).execute('$..result'))) for l in latencies ] for [n,u] in experiments ]
-
-
-[ [n, pprint_measures(m0), pprint_measures(m10), pprint_measures(m25), pprint_measures(m50), pprint_measures(m100) ] for [n, m0, m10, m25, m50, m100] in exps ]
-
+[[perf[0]] + map(lambda p: ("%05.2f, %05.2f, %d" % p), perf[1:]) for perf in perfs_rally]
 #+END_SRC
 
-#+RESULTS: latencies-perf-data
-| Exp Name                     | Oms             | 10ms            | 25ms            | 50ms            | 100ms           |
+#+RESULTS: rally-latencies-perf-data
+| Exp Name                     | Oms             | 20ms            | 50ms            | 100ms           | 200ms           |
 |------------------------------+-----------------+-----------------+-----------------+-----------------+-----------------|
-| Boot & Associate Floating IP | (15.48 02.67 0) | (17.20 01.98 0) | (18.26 02.35 0) | (20.63 02.08 0) | (25.61 02.20 0) |
-| Boot & Delete Server         | (15.13 01.07 0) | (17.85 01.53 0) | (20.34 00.73 5) | (23.77 00.97 5) | (30.86 03.26 0) |
-| Boot & Add Sec. Group        | (65.83 02.03 0) | (65.55 01.87 0) | (66.00 02.70 0) | (68.46 02.02 0) | (73.57 03.47 0) |
-| Pause & Unpause server       | (17.25 00.96 0) | (19.46 01.28 0) | (22.17 00.90 0) | (24.62 01.00 0) | (28.86 01.24 0) |
-| Create & Delete Networks     | (01.34 00.13 0) | (01.33 00.10 0) | (01.31 00.13 0) | (01.33 00.13 0) | (01.36 00.13 0) |
-| Create & Delete Ports        | (21.12 00.64 0) | (20.92 00.58 0) | (21.31 00.54 0) | (21.05 00.76 0) | (20.99 00.60 0) |
-| Create & Delete Routers      | (12.00 00.27 0) | (11.80 00.32 0) | (12.16 00.38 0) | (11.98 00.37 0) | (11.74 00.39 0) |
-| Create & Delete Sec. Groups  | (00.66 00.08 0) | (00.63 00.11 0) | (00.64 00.12 0) | (00.66 00.12 0) | (00.61 00.06 0) |
-| Create & Delete Subnets      | (02.96 00.26 0) | (03.10 00.38 0) | (02.98 00.34 0) | (02.92 00.30 0) | (02.96 00.39 0) |
+| Boot & Associate Floating IP | 15.48, 02.67, 0 | 17.20, 01.98, 0 | 18.26, 02.35, 0 | 20.63, 02.08, 0 | 25.61, 02.20, 0 |
+| Boot & Delete Server         | 15.13, 01.07, 0 | 17.85, 01.53, 0 | 20.34, 00.73, 5 | 23.77, 00.97, 5 | 30.86, 03.26, 0 |
+| Boot & Add Sec. Group        | 65.83, 02.03, 0 | 65.55, 01.87, 0 | 66.00, 02.70, 0 | 68.46, 02.02, 0 | 73.57, 03.47, 0 |
+| Pause & Unpause server       | 17.25, 00.96, 0 | 19.46, 01.28, 0 | 22.17, 00.90, 0 | 24.62, 01.00, 0 | 28.86, 01.24, 0 |
+| Create & Delete Networks     | 01.34, 00.13, 0 | 01.33, 00.10, 0 | 01.31, 00.13, 0 | 01.33, 00.13, 0 | 01.36, 00.13, 0 |
+| Create & Delete Ports        | 21.12, 00.64, 0 | 20.92, 00.58, 0 | 21.31, 00.54, 0 | 21.05, 00.76, 0 | 20.99, 00.60, 0 |
+| Create & Delete Routers      | 12.00, 00.27, 0 | 11.80, 00.32, 0 | 12.16, 00.38, 0 | 11.98, 00.37, 0 | 11.74, 00.39, 0 |
+| Create & Delete Sec. Groups  | 00.66, 00.08, 0 | 00.63, 00.11, 0 | 00.64, 00.12, 0 | 00.66, 00.12, 0 | 00.61, 00.06, 0 |
+| Create & Delete Subnets      | 02.96, 00.26, 0 | 03.10, 00.38, 0 | 02.98, 00.34, 0 | 02.92, 00.30, 0 | 02.96, 00.39, 0 |
 
-#+NAME: latencies-perf
-#+HEADER: :results file :export code
-#+BEGIN_SRC python
+#+NAME: rally-latencies-perf
+#+HEADER: :export code :results file
+#+BEGIN_SRC python :var experiments_metadata=experiments_metadata throughput_data=throughput-data
 import matplotlib.pyplot as plt
 
-def execution_time(m):
-  return m[0]
+# Accessors to *-latencies-perf-data
+def perf_mean(l):
+    return l[0]
+
+def perf_std(l):
+    return l[1]
+
+def perf_error(l):
+    return l[2]
+
+def is_nova_perfs(perfs):
+    return exp_name(perfs) in map(exp_name, filter(is_nova, experiments_metadata))
+
 
 img = plt.figure()
 
-for exp in exps[:4]: # Only select Nova tests
-  plt.plot(latencies, map(execution_time, exp[1:]), marker='+', label=exp[0])
+nova_perfs_rally = filter(is_nova_perfs, perfs_rally)
 
-plt.xlabel("Latency (ms)")
+for p in (nova_perfs_rally):
+  plt.plot(latencies, map(perf_mean, p[1:]), '--', marker='+', label=exp_name(p), linewidth=1)
+
+plt.xlabel("RTT Latency (ms)")
 plt.legend(loc='center left')
 plt.ylabel("Execution Time (s)")
 # plt.title("Bit Rate Reference")
@@ -146,5 +196,43 @@ img.savefig('latencies-perf.svg')
 'latencies-perf.svg'
 #+END_SRC
 
-#+RESULTS: latencies-perf
+#+RESULTS: rally-latencies-perf
 [[file:latencies-perf.svg]]
+
+** Data Plane Results (Shaker)
+#+NAME: shaker-latencies-perf-data
+#+HEADER: :colnames '("Exp Name" "Oms" "20ms" "50ms" "100ms" "200ms")
+#+BEGIN_SRC python :var experiments_metadata=experiments_metadata
+import numpy as np
+import objectpath as op
+import operator
+
+def rally_url(exp, lat, file):
+    """Produces the url to download the json rally report.
+
+    `exp`  is the experimentation name, e.g, 'cpt01-osp', 'cpt10'.
+    `lat`  is the latency as provided in throughput_data.
+    `file` is the json report name, as in `rally-<file>.json`.
+    """
+    return "%s/%s/%s-lat%s-los0/root/rally_home/rally-%s.json"\
+           % (exps_url, exp, exp, int(lat/2), file)
+
+def mk_results(json):
+  durations = list(op.Tree(json).execute('$..result.duration'))
+  mean = np.average(durations)
+  std  = np.std(durations)
+  errors = list(op.Tree(json).execute('$..result.error'))
+  p_errors  = len(filter(operator.truth, errors)) / float(len(errors)) * 100.0
+  return  (mean, std, p_errors)
+
+exps_rally = [ [exp_name(e)] + [ mk_results(_req.get(rally_url('cpt10', l, exp_file(e))).json())
+               for l in map(int, latencies) ]
+               for e in experiments_metadata if is_rally(e) ]
+
+
+[[exp[0]] + map(lambda e: ("%05.2f, %05.2f, %d" % e), exp[1:]) for exp in exps_rally]
+#+END_SRC
+
+* Neutron DVR Based Deployment
+
+* Packet Loss Impact
