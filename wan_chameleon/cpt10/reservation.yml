@@ -1,0 +1,63 @@
+---
+# ############################################### #
+# Enos Configuration File                         #
+# ############################################### #
+
+# Provider specific config
+provider:
+  name: Enos/WAN-cpt10.2
+  type: chameleonbaremetal
+  walltime: "50:00:00"
+  gateway: false
+  key_name: enos-matt-ephemeral
+
+# Resources description
+topology:
+  grp1:
+    compute:
+      control: 1
+  grp2:
+    compute:
+      compute: 10
+
+network_constraints:
+  enable: true
+  default_delay: 100ms
+  default_loss: 25%
+  default_rate: 40Gbit
+
+enable_monitoring: false
+
+# ############################################### #
+# Inventory to use                                #
+# ############################################### #
+
+# Topology of your services
+inventory: /home/cc/enos-scenarios/wan/inventory
+
+# ############################################### #
+# docker registry parameters
+# ############################################### #
+registry:
+  ceph: false
+  ceph_keyring: /home/rcherrueau/.ceph/ceph.client.rcherrueau.keyring
+  ceph_id: rcherrueau
+  ceph_rbd: rcherrueau_/docker_registry
+  ceph_mon_host:
+    - ceph0.rennes.grid5000.fr
+    - ceph1.rennes.grid5000.fr
+    - ceph2.rennes.grid5000.fr
+
+# ############################################### #
+# Kolla parameteres                               #
+# ############################################### #
+# Repository
+# kolla_repo: https://git.openstack.org/openstack/kolla-ansible
+kolla_repo: https://github.com/openstack/kolla-ansible
+kolla_ref: stable/ocata
+
+# globals.yml
+kolla:
+  kolla_base_distro: centos
+  kolla_install_type: source
+  docker_namespace: beyondtheclouds
