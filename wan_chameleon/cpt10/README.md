@@ -4,6 +4,8 @@ To launch it you have two choices :
 1. The easy way aka from a node inside chameleon (recommended)
 2. The adventurer's way aka from your local machine.
 
+> Enos latest documentation : https://enos.readthedocs.io/en/latest/
+
 ## From inside chameleon chi@uc
 
 * Provision a new Ubuntu16.04 server that will act as the experiment frontend.
