@@ -1,7 +1,7 @@
 `./run-cpt10.sh` will run the whole set of experiments.
 To launch it you have two choices :
 
-1. The easy way aka from a node inside chameleon
+1. The easy way aka from a node inside chameleon (recommended)
 2. The adventurer's way aka from your local machine.
 
 ## From inside chameleon chi@uc
