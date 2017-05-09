@@ -40,6 +40,6 @@ losses = sorted(list(losses))
 for loss in losses:
     block = results[results[:, 2] == unicode(loss)]
     block = block[np.argsort(block[:, 1])]
-    print("LOSSES = %s" % loss)
+    #print("LOSSES = %s" % loss)
     for name,lat,los,m,s,e in block:
         print("%-60s %-4s %-4s %s" % (name,lat,los, pprint_measures((float(m),float(s),float(e)))))

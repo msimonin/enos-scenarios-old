@@ -4,6 +4,10 @@ import glob
 import json
 import matplotlib
 matplotlib.use('tkagg')
+matplotlib.rcParams.update({'font.size': 16})
+#                            'figure.figsize': [16.0, 12.0]})
+#matplotlib.rcParams.update({'font.size': 20})
+import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt
 import numpy as np
 import objectpath as op
@@ -70,13 +74,15 @@ for loss in losses:
     times = times[np.argsort(times[:, 0])]
     ax1.errorbar(times[:,0] ,times[:,1], yerr=times[:,2],
                 ls=styles[loss]['ls'],
-                lw=1,
+                lw=3,
+                markersize=15,
                 color=styles[loss]['color'],
                 marker=styles[loss]['marker'],
                 label="Loss %s%%" % loss )
     ax2.errorbar(times[:,0] ,times[:,1], yerr=times[:,2],
                 ls=styles[loss]['ls'],
-                lw=1,
+                lw=3,
+                markersize=15,
                 color=styles[loss]['color'],
                 marker=styles[loss]['marker'],
                 label="Loss %s%%" % loss )

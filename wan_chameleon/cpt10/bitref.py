@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.rcParams.update({'font.size': 16,
+    'figure.figsize': [8.0, 6.0]})
 import matplotlib.pyplot as plt
 
 latencies   = [ l/2. for [l, _] in data ] # x
@@ -13,4 +16,3 @@ plt.show()
 img.savefig('biterate-ref.png')
 img.savefig('biterate-ref.pdf')
 img.savefig('biterate-ref.svg')
-return 'biterate-ref.svg'

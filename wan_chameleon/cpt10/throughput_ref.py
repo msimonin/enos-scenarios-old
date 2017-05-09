@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import matplotlib
 matplotlib.use('tkagg')
+matplotlib.rcParams.update({'font.size': 16})
+#                            'figure.figsize': [16.0, 12.0]})
 #matplotlib.rcParams.update({'font.size': 20})
 import matplotlib.pyplot as plt
 
@@ -45,9 +47,10 @@ for loss in losses:
     throughputs = datas[datas[:, 1] == loss][:, 3]
     plt.plot(latencies, throughputs,
                 ls=styles[loss]['ls'],
-                lw=1,
+                lw=3,
                 color=styles[loss]['color'],
                 marker=styles[loss]['marker'],
+                markersize=15,
                 label="Loss %s%%" % loss )
 
 plt.xlabel("RTT Latency (ms)")
