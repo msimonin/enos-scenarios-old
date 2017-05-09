@@ -18,10 +18,11 @@ WORKLOAD="${EXP_HOME}/workload"
 
 trap 'exit' SIGINT
 
+sudo apt-get update
+sudo apt-get install -y git virtualenv python-dev
 # Get Enos and setup the Virtual environment (if none)
 if [ ! -d "${ENOS_HOME}" ]; then
   git clone "${ENOS_GIT}" --depth 1 --branch "${ENOS_REF}" "${ENOS_HOME}" 
-
 fi
 
 pushd "${ENOS_HOME}"
@@ -35,13 +36,13 @@ popd
 
 # Run the experiment a first time to fill cache
 pushd "${ENOS_HOME}"
-#python -m enos.enos up -f "${EXP_HOME}/reservation.yml" 
-#python -m enos.enos os
+python -m enos.enos up -f "${EXP_HOME}/reservation.yml" 
+python -m enos.enos os
 # chameleon related
 # this variable conflict with those required on the under-cloud
-#unset OS_TENANT_ID
-#python -m enos.enos init
-#python -m enos.enos bench --workload="${WORKLOAD}"
+unset OS_TENANT_ID
+python -m enos.enos init
+python -m enos.enos bench --workload="${WORKLOAD}"
 popd
 
 # Run experiments with different latencies 
