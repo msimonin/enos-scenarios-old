@@ -2,7 +2,7 @@
 #+AUTHOR: Ronan-Alexandre Cherrueau
 #+EMAIL:  (λx.λy.x@y) Ronan-Alexandre.Cherrueau inria.fr
 #+LANGUAGE: en
-#+PROPERTY: header-args:python :session
+#+PROPERTY: header-args:python :var exps_url="file:///home/rfish/prog/inria-perso/rsc" :session
 
 # Some configuration variables
 # Experiment URL is weather a file or http url, e.g, http://enos.irisa.fr/html/wan
@@ -10,7 +10,6 @@
 # Doc: https://org-babel.readthedocs.io/en/latest
 
 * Throughput Expectations
-
 See [[http://enos.irisa.fr/html/wan/cpt10/][cpt10-lat*-los0/*.stats]] for raw measures.
 
 #+NAME: throughput-data
@@ -26,6 +25,7 @@ See [[http://enos.irisa.fr/html/wan/cpt10/][cpt10-lat*-los0/*.stats]] for raw me
 #+NAME: throughput-ref
 #+HEADER: :results file
 #+BEGIN_SRC python :var throughput_data=throughput-data
+import matplotlib
 import matplotlib.pyplot as plt
 
 def org_print(str):
@@ -39,6 +39,9 @@ def latency(l):
 def throughput(l):
     return l[1]
 
+matplotlib.rcParams.update({'font.size': 16,
+                            'figure.figsize': [8.0, 6.0]})
+
 # Compute values
 latencies   = map(latency, throughput_data)    # x
 throughputs = map(throughput, throughput_data) # y
@@ -47,7 +50,7 @@ img = plt.figure()
 # Make plot
 plt.plot(latencies, throughputs, '--',
          marker='+', label='Throughput Expectations',
-         linewidth=1, color='#FF5722')
+         linewidth=3, markersize=15, color='#FF5722')
 plt.xlabel("RTT Latency (ms)")
 plt.ylabel("Throughput (Mbits/s)")
 plt.legend(loc='upper right')
@@ -65,10 +68,6 @@ org_print('biterate-ref.svg')
 
 
 * Latency Impact
-  :PROPERTIES:
-  :header-args: :var exps_url="file:///home/rfish/prog/inria-perso/rsc"
-  :END:
-
 Experimentation done during the test are:
 #+NAME: experiments-metadata
 #+CAPTION: List of Performed Experiments
@@ -136,20 +135,23 @@ def are_l3_perfs(perfs):
 
 ** Control Plane Results (Rally)
 #+NAME: latency-impact-controlplane-data
-#+HEADER: :colnames '("Exp Name" "Oms" "20ms" "50ms" "100ms" "200ms")
+#+HEADER: :colnames '("Exp Name" "LAN" "20ms" "50ms" "100ms" "200ms")
 #+BEGIN_SRC python :var experiments_metadata=experiments-metadata
 import numpy as np
 import objectpath as op
 import operator
 
-def rally_url(lat, file):
+def rally_url(exp_name, lat, file):
     """Produces the url to download the json rally report.
 
+    `exp_name` Name of the experiment (as in the url)
     `lat`  is the latency as provided in throughput_data.
     `file` is the json report name, as in `rally-<file>.json`.
     """
-    return "%s/cpt10/cpt10-lat%s-los0/root/rally_home/rally-%s.json"\
-           % (exps_url, int(lat/2), file)
+    # return "%s/%s/cpt10-lat%s-los0/root/rally_home/rally-%s.json"\
+    #        % (exps_url, exp_name, int(lat/2), file)
+    return org_print("%s/%s/cpt10-lat%s-los0/root/rally_home/rally-%s.json"\
+           % (exps_url, exp_name, int(lat/2), file))
 
 def compute_cp(json):
     "Processes json and computes controle plane values."
@@ -160,7 +162,7 @@ def compute_cp(json):
     p_errors  = len(filter(operator.truth, errors)) / float(len(errors)) * 100.0
     return  (mean, std, p_errors)
 
-perfs_cp = [ [exp_name(e)] + [ compute_cp(_req.get(rally_url(l, exp_file(e))).json())
+perfs_cp = [ [exp_name(e)] + [ compute_cp(_req.get(rally_url('cpt10', l, exp_file(e))).json())
              for l in map(int, latencies) ]
              for e in experiments_metadata if is_rally(e) ]
 
@@ -169,7 +171,7 @@ org_print([[perf[0]] + map(lambda p: ("%05.2f, %05.2f, %d" % p), perf[1:]) for p
 #+END_SRC
 
 #+RESULTS: latency-impact-controlplane-data
-| Exp Name                     | Oms             | 20ms            | 50ms            | 100ms           | 200ms           |
+| Exp Name                     | LAN             | 20ms            | 50ms            | 100ms           | 200ms           |
 |------------------------------+-----------------+-----------------+-----------------+-----------------+-----------------|
 | Boot & Associate Floating IP | 15.48, 02.67, 0 | 17.20, 01.98, 0 | 18.26, 02.35, 0 | 20.63, 02.08, 0 | 25.61, 02.20, 0 |
 | Boot & Delete Server         | 15.13, 01.07, 0 | 17.85, 01.53, 0 | 20.34, 00.73, 5 | 23.77, 00.97, 5 | 30.86, 03.26, 0 |
@@ -188,11 +190,13 @@ import matplotlib.pyplot as plt
 
 img = plt.figure()
 for p in filter(are_nova_perfs, perfs_cp):
-  plt.plot(latencies, map(perf_mean, p[1:]), '--', marker='+', label=exp_name(p), linewidth=1)
+  plt.plot(latencies, map(perf_mean, p[1:]), '--',
+           marker='+', label=exp_name(p), linewidth=3,
+           markersize=15)
 
 plt.xlabel("RTT Latency (ms)")
 plt.legend(loc='center left')
-plt.ylabel("Execution Time (s)")
+plt.ylabel("Compltetion Time (s)")
 
 img.savefig('latency-impact-cp-nova.png')
 img.savefig('latency-impact-cp-nova.pdf')
@@ -205,19 +209,20 @@ org_print('latency-impact-cp-nova.svg')
 
 ** Data Plane Results (Shaker)
 #+NAME: latency-impact-dataplane-data
-#+HEADER: :colnames '("Exp Name" "Oms" "20ms" "50ms" "100ms" "200ms")
+#+HEADER: :colnames '("Exp Name" "LAN" "20ms" "50ms" "100ms" "200ms")
 #+BEGIN_SRC python
 import numpy as np
 import objectpath as op
 
-def shaker_url(lat, file):
+def shaker_url(exp_name, lat, file):
     """Produces the url to download the json shaker report.
 
+    `exp_name` Name of the experiment (as in the url)
     `lat`  is the latency as provided in throughput_data.
     `file` is the json report name, as in `rally-<file>.json`.
     """
-    return "%s/cpt10-shaker/cpt10-lat%s-los0/root/shaker_home/%s.json"\
-           % (exps_url, int(lat/2), file)
+    return "%s/%s/cpt10-lat%s-los0/root/shaker_home/%s.json"\
+           % (exps_url, exp_name, int(lat/2), file)
 
 def compute_dp(json):
     """Processes shaker json and computes data plane values.
@@ -230,24 +235,24 @@ def compute_dp(json):
         return l[1]
     pings = map(ping, list(op.Tree(json).execute('$..*[@.test is "Bi-directional"' +
                                                  '     and @.concurrency is 1].samples'))[0])
-    median = np.median(pings)
+    mean = np.average(pings)
     std    = np.std(pings)
-    return (median, std)
+    return (mean, std)
 
-perfs_dp = [ [exp_name(e)] + [ compute_dp(_req.get(shaker_url(l, exp_file(e))).json())
+perfs_dp = [ [exp_name(e)] + [ compute_dp(_req.get(shaker_url('cpt10', l, exp_file(e))).json())
              for l in map(int, latencies) ]
              for e in experiments_metadata if is_shaker(e) ]
 
 # Output results into org
-org_print([[perf[0]] + map(lambda p: ("%05.2f, %05.2f" % p), perf[1:]) for perf in perfs_dp])
+org_print([[exp_name(perf)] + map(lambda p: ("%05.2f, %05.2f" % p), perf[1:]) for perf in perfs_dp])
 #+END_SRC
 
 #+RESULTS: latency-impact-dataplane-data
-| Exp Name           | Oms          | 20ms         | 50ms          | 100ms         | 200ms         |
+| Exp Name           | LAN          | 20ms         | 50ms          | 100ms         | 200ms         |
 |--------------------+--------------+--------------+---------------+---------------+---------------|
-| L2 Full            | 02.73, 01.14 | 02.50, 01.11 | 02.46, 01.13  | 02.52, 01.12  | 02.57, 01.16  |
-| L3 Dense East/West | 06.87, 02.94 | 41.98, 01.93 | 100.00, 00.63 | 200.00, 00.41 | 400.00, 00.29 |
-| L3 Full East/West  | 05.23, 01.96 | 42.78, 03.49 | 100.00, 00.43 | 200.00, 00.27 | 400.00, 00.20 |
+| L2 Full            | 02.41, 01.14 | 02.24, 01.11 | 02.30, 01.13  | 02.37, 01.12  | 02.42, 01.16  |
+| L3 Dense East/West | 06.44, 02.94 | 42.65, 01.93 | 100.30, 00.63 | 200.14, 00.41 | 400.07, 00.29 |
+| L3 Full East/West  | 04.69, 01.96 | 43.99, 03.49 | 100.14, 00.43 | 200.09, 00.27 | 400.04, 00.20 |
 
 #+NAME: latency-impact-dataplane-plot
 #+HEADER: :export code :results file
@@ -256,10 +261,11 @@ import matplotlib.pyplot as plt
 
 img = plt.figure()
 for p in filter(are_l3_perfs, perfs_dp):
-  plt.plot(latencies, map(perf_mean, p[1:]), '--', marker='+', label=exp_name(p), linewidth=1)
+  plt.errorbar(latencies, map(perf_mean, p[1:]), map(perf_std, p[1:]),
+               ls='--', marker='+', label=exp_name(p), linewidth=3, markersize=15, capsize=5)
 
 plt.xlabel("RTT Latency (ms)")
-plt.legend(loc='center left')
+plt.legend(loc='lower right')
 plt.ylabel("Ping Response Time (ms)")
 # plt.title("Bit Rate Reference")
 
@@ -273,7 +279,119 @@ org_print('latency-impact-dataplane-l3.svg')
 [[file:latency-impact-dataplane-l3.svg]]
 
 
+* Lantency Impact on Chameleon
+** Control Plane Results (Rally)
+#+NAME: chameleon-latency-impact-controlplane-data
+#+HEADER: :colnames '("Exp Name" "LAN" "20ms" "50ms" "100ms" "200ms")
+#+BEGIN_SRC python :var experiments_metadata=experiments-metadata
+import numpy as np
+import objectpath as op
+import operator
+
+def compute_cp(json):
+    "Processes json and computes controle plane values."
+    durations = list(op.Tree(json).execute('$..result.duration'))
+    mean = np.average(durations)
+    std  = np.std(durations)
+    errors = list(op.Tree(json).execute('$..result.error'))
+    p_errors  = len(filter(operator.truth, errors)) / float(len(errors)) * 100.0
+    return  (mean, std, p_errors)
+
+perfs_cp = [ [exp_name(e)] + [ compute_cp(_req.get(rally_url('cpt10-chameleon', l, exp_file(e))).json())
+             for l in map(int, latencies) ]
+             for e in experiments_metadata if is_rally(e) ]
+
+# Output results into org
+org_print([[perf[0]] + map(lambda p: ("%05.2f, %05.2f, %d" % p), perf[1:]) for perf in perfs_cp])
+#+END_SRC
+
+#+RESULTS: chameleon-latency-impact-controlplane-data
+| Exp Name                     | LAN             | 20ms            | 50ms            | 100ms           | 200ms           |
+|------------------------------+-----------------+-----------------+-----------------+-----------------+-----------------|
+| Boot & Associate Floating IP | 15.61, 02.47, 0 | 17.20, 01.98, 0 | 17.98, 02.77, 0 | 19.70, 01.94, 0 | 23.66, 02.52, 0 |
+| Boot & Delete Server         | 16.62, 00.98, 0 | 16.42, 00.69, 0 | 18.50, 01.85, 0 | 21.63, 00.94, 0 | 25.95, 00.90, 0 |
+| Boot & Add Sec. Group        | 65.72, 02.04, 0 | 64.82, 02.96, 0 | 65.87, 03.01, 0 | 65.88, 01.87, 0 | 72.39, 03.21, 0 |
+| Pause & Unpause server       | 18.43, 01.11, 0 | 18.32, 00.85, 0 | 20.39, 01.37, 0 | 23.25, 01.22, 0 | 27.84, 01.93, 0 |
+| Create & Delete Networks     | 01.33, 00.13, 0 | 01.24, 00.15, 0 | 01.34, 00.11, 0 | 01.34, 00.12, 0 | 01.29, 00.13, 0 |
+| Create & Delete Ports        | 20.14, 00.84, 0 | 20.12, 01.10, 0 | 19.65, 00.92, 0 | 19.78, 01.09, 0 | 19.62, 01.07, 0 |
+| Create & Delete Routers      | 11.76, 00.60, 0 | 11.34, 00.53, 0 | 11.48, 00.50, 0 | 11.18, 00.47, 0 | 11.38, 00.40, 0 |
+| Create & Delete Sec. Groups  | 00.58, 00.08, 0 | 00.59, 00.09, 0 | 00.60, 00.10, 0 | 00.61, 00.09, 0 | 00.61, 00.07, 0 |
+| Create & Delete Subnets      | 02.80, 00.24, 0 | 02.89, 00.40, 0 | 02.82, 00.41, 0 | 02.70, 00.32, 0 | 02.72, 00.46, 0 |
+
+#+NAME: chameleon-latency-impact-controlplane-plot
+#+HEADER: :export code :results file
+#+BEGIN_SRC python :var experiments_metadata=experiments-metadata
+img = plt.figure()
+for p in filter(are_nova_perfs, perfs_cp):
+  plt.plot(latencies, map(perf_mean, p[1:]), '--',
+           marker='+', label=exp_name(p), linewidth=3, markersize=15)
+
+plt.xlabel("RTT Latency (ms)")
+plt.legend(loc='center left')
+plt.ylabel("Compltetion Time (s)")
+
+img.savefig('chameleon-latency-impact-cp-nova.png')
+img.savefig('chameleon-latency-impact-cp-nova.pdf')
+img.savefig('chameleon-latency-impact-cp-nova.svg')
+org_print('chameleon-latency-impact-cp-nova.svg')
+#+END_SRC
+
+#+RESULTS: chameleon-latency-impact-controlplane-plot
+[[file:chameleon-latency-impact-cp-nova.svg]]
+
+
 * Neutron DVR Based Deployment
+
+** Control Plane Results (Rally)
+#+NAME: latency-impact-dvr-controlplane-data
+| Exp Name                     | LAN | 20ms | 50ms | 100ms | 200ms |
+|------------------------------+-----+------+------+-------+-------|
+| Boot & Associate Floating IP |     |      |      |       |       |
+| Boot & Delete Server         |     |      |      |       |       |
+| Boot & Add Sec. Group        |     |      |      |       |       |
+| Pause & Unpause server       |     |      |      |       |       |
+
+
+** Data Plane Results (Shaker)
+#+NAME: latency-impact-dvr-dataplane-data
+#+HEADER: :colnames '("Exp Name" "Oms" "20ms" "50ms" "100ms" "200ms")
+#+BEGIN_SRC python
+perfs_dvr_dp = [ [exp_name(e)] + [ compute_dp(_req.get(shaker_url('cpt10-dvr', l, exp_file(e))).json())
+                 for l in map(int, latencies) ]
+                 for e in experiments_metadata if is_shaker(e) ]
+
+# Output results into org
+org_print([[exp_name(perf)] + map(lambda p: ("%05.2f, %05.2f" % p), perf[1:]) for perf in perfs_dvr_dp])
+#+END_SRC
+
+#+RESULTS: latency-impact-dvr-dataplane-data
+| Exp Name           | Oms          | 20ms         | 50ms         | 100ms        | 200ms        |
+|--------------------+--------------+--------------+--------------+--------------+--------------|
+| L2 Full            | 02.25, 01.16 | 02.54, 01.21 | 02.45, 01.08 | 02.32, 01.03 | 02.54, 01.19 |
+| L3 Dense East/West | 01.29, 00.56 | 01.42, 01.10 | 01.43, 00.53 | 01.30, 00.54 | 01.35, 00.57 |
+| L3 Full East/West  | 02.47, 01.12 | 02.23, 01.18 | 02.82, 01.30 | 02.46, 01.19 | 02.44, 01.21 |
+
+#+NAME: latency-impact-dvr-dataplane-plot
+#+HEADER: :export code :results file
+#+BEGIN_SRC python :var experiments_metadata=experiments-metadata
+img = plt.figure()
+for p in filter(are_l3_perfs, perfs_dvr_dp):
+  plt.errorbar(latencies, map(perf_mean, p[1:]), yerr=map(perf_std, p[1:]),
+               ls='--', marker='+', label=exp_name(p), linewidth=3, markersize=15, capsize=5)
+
+plt.xlabel("RTT Latency (ms)")
+plt.legend(loc='upper right')
+plt.ylabel("Ping Response Time (ms)")
+# plt.title("Bit Rate Reference")
+
+img.savefig('latency-impact-dvr-dataplane-l3.png')
+img.savefig('latency-impact-dvr-dataplane-l3.pdf')
+img.savefig('latency-impact-dvr-dataplane-l3.svg')
+org_print('latency-impact-dvr-dataplane-l3.svg')
+#+END_SRC
+
+#+RESULTS: latency-impact-dvr-dataplane-plot
+[[file:latency-impact-dvr-dataplane-l3.svg]]
 
 
 * Packet Loss Impact
