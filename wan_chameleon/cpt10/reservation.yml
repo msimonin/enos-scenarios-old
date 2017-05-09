@@ -61,3 +61,10 @@ kolla:
   kolla_base_distro: centos
   kolla_install_type: source
   docker_namespace: beyondtheclouds
+
+# patches
+patches:
+  - name: patch kolla-ansible
+    src: /tmp/enos-scenarios/wan_chameleon/cpt10/patches/kolla-ansible
+    dst: kolla/tools/kolla-ansible
+    enabled: "no"
