@@ -1,0 +1,51 @@
+---
+# this is a sample of workload
+# prerequisite:
+# - we rely on the rally template mechanism
+#
+rally:
+    enabled: true
+    args:
+      concurrency:
+        - 1
+      times:
+        - 20
+    scenarios:
+      # Nova Scenarios
+      - name: boot and delete servers
+        file: nova/boot-and-delete.yaml
+      - name: boot associate floating ip
+        file: nova/boot-and-associate-floating-ip.yaml
+      - name: boot server and add security groups
+        file: nova/boot-server-and-add-secgroup.yaml
+      - name: pause unpause
+        file: nova/pause-and-unpause.yaml
+      # Neutron Scenarios
+      # Required Neutron lbaas extension
+      # - name: create and delete pools
+      #   file: neutron/create-and-delete-pools.yaml
+      # - name: create and delete vips
+      #   file: neutron/create-and-delete-vips.yaml
+      - name: create and delete network
+        file: neutron/create-and-delete-networks.yaml
+      - name: create and delete routers
+        file: neutron/create-and-delete-routers.yaml
+      - name: create and delete ports
+        file: neutron/create-and-delete-ports.yaml
+      - name: create and delete security groups
+        file: neutron/create-and-delete-security-groups.yaml
+      - name: create and delete subnets
+        file: neutron/create-and-delete-subnets.yaml
+      # Glance
+      # - name: create and delete image
+      #   file: glance/create-and-delete-image.yaml
+
+shaker:
+    enabled: true
+    scenarios:
+      - name: shaker full l2
+        file: openstack/full_l2
+      - name: shaker dense l3 east/west
+        file: openstack/dense_l3_east_west
+      - name: shaker full l3 east/west
+        file: openstack/full_l3_east_west

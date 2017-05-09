@@ -1,0 +1,68 @@
+---
+# ############################################### #
+# Enos Configuration File                         #
+# ############################################### #
+
+# Provider specific config
+provider:
+  name: Enos/WAN
+  type: g5k
+  walltime: "61:59:00"
+  # reservation: "2017-05-05 19:00:01"
+  vlans:
+    rennes: "{type='kavlan'}/vlan=1"
+  role_distribution: debug
+
+# Resources description
+topology:
+  grp1:
+    parasilo:
+      control: 1
+  grp2:
+    parasilo:
+      compute: 10
+
+network_constraints:
+  enable: true
+  default_delay: 100ms
+  default_loss: 0%
+  default_rate: 40Gbit
+
+enable_monitoring: false
+
+# ############################################### #
+# Inventory to use                                #
+# ############################################### #
+
+# Topology of your services
+inventory: /home/rcherrueau/enos-scenarios/wan/inventory
+
+# ############################################### #
+# docker registry parameters
+# ############################################### #
+registry:
+  ceph: true
+  ceph_keyring: /home/rcherrueau/.ceph/ceph.client.rcherrueau.keyring
+  ceph_id: rcherrueau
+  ceph_rbd: rcherrueau_/docker_registry
+  ceph_mon_host:
+    - ceph0.rennes.grid5000.fr
+    - ceph1.rennes.grid5000.fr
+    - ceph2.rennes.grid5000.fr
+
+# ############################################### #
+# Kolla parameteres                               #
+# ############################################### #
+# Repository
+# kolla_repo: https://git.openstack.org/openstack/kolla-ansible
+kolla_repo: https://github.com/openstack/kolla-ansible
+kolla_ref: stable/ocata
+
+# globals.yml
+kolla:
+  kolla_base_distro: centos
+  kolla_install_type: source
+  docker_namespace: beyondtheclouds
+  enable_heat: "yes"
+  enable_neutron_dvr: "yes"
+
