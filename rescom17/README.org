@@ -24,3 +24,8 @@ the virtual environment:
 
 From now, you can try enos:
 : python -m enos.enos -h
+
+* Customization
+Someone can change the version of enos by modifying ~ENOS~ values in
+the vagrant file. You can also change the ~reservation.yml~ to tune
+the deployed OpenStack.
