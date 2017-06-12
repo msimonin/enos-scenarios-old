@@ -1,0 +1,62 @@
+---
+# Build a bundle to play with enos
+- hosts: all
+  tasks:
+  - name: Install bundle dependencies
+    apt: name={{ item }} state=present update_cache=yes
+    with_items:
+      # Sanity
+      - vim
+      # Enos & Co
+      - git
+      - libffi-dev
+      - libssl-dev
+      - python-dev
+      - python-pip
+      - python-virtualenv
+    sudo: true
+
+  - name: Download enos
+    git:
+      repo: "{{ enos.repo }}"
+      dest: ~/enos
+      depth: 1
+      version: "{{ enos.version }}"
+
+  - name: Create a directory for the virtualenv
+    file: path=~/enos/venv state=directory
+
+  - name: Install enos requirements in the virtualenv
+    pip:
+      requirements: requirements.txt
+      chdir: /home/vagrant/enos
+      virtualenv: ~/enos/venv
+
+  - name: Generate a new ssh keys
+    command: ssh-keygen -t rsa -P '' -f '/home/vagrant/.ssh/id_rsa'
+    args:
+      creates: /home/vagrant/.ssh/id_rsa
+
+  - name: Put ssh public key into root authorized_keys to authorize root ssh connections
+    shell: |
+      mkdir ~/.ssh/
+      cat /home/vagrant/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
+    args:
+      creates: /root/.ssh/autorized_keys
+    sudo: true
+
+  - name: Call enos deploy
+    shell: |
+      . venv/bin/activate
+      python -m enos.enos deploy -f /vagrant_data/reservation.yml 2>&1 > /tmp/enos-deploy.log
+    args:
+      chdir: /home/vagrant/enos/
+      creates: enos-deployed
+
+  - name: Call enos destroy
+    shell: |
+      . venv/bin/activate
+      python -m enos.enos destroy 2>&1 > /tmp/enos-destroy.log
+    args:
+      chdir: /home/vagrant/enos/
+      creates: enos-destroyed

@@ -1,0 +1,33 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+ENOS = {
+  # :repo    => "https://github.com/BeyondTheClouds/enos.git",
+  # :version => "HEAD"
+  :repo    => "https://github.com/rcherrueau/enos.git",
+  :version => "static-provider"
+}
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/debian-8.7"
+
+  config.vm.hostname = "enos-node"
+  config.vm.network :private_network, ip: "192.168.142.127", auto_config: true
+  config.vm.network :private_network, ip: "192.168.143.127", auto_config: true
+  config.vm.network :private_network, ip: "192.168.144.127", auto_config: true
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.cpus = 6
+    vb.memory = 8192
+  end
+
+  config.vm.synced_folder "./", "/vagrant_data",
+    owner: "vagrant",
+    group: "vagrant"
+
+  config.vm.provision :ansible_local do |ansible|
+    ansible.playbook = "boilerplate.yml"
+    ansible.verbose = "-vvvv"
+    ansible.extra_vars = {:enos => ENOS}
+  end
+end
