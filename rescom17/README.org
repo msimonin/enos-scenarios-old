@@ -14,16 +14,16 @@ Start box provisioning:
 Build the box:
 : vagrant package
 
-
 * Using the box
-Configure a new Vagrantfile with the fresh box, then start it and
-connect to it. Now, inside the box go into the enos directory and load
+Configure a new Vagrantfile with the fresh box (see
+~Vagrantfile.sample~ for configuration example). Then start it and SSH
+on it. Now, inside the box go into the ~/opt/enos~ directory and load
 the virtual environment:
-: cd enos
+: cd /opt/enos
 : source venv/bin/activate
 
 From now, you can try enos:
-: python -m enos.enos -h
+: python -m enos.enos deploy -f reservation.yaml
 
 * Customization
 Someone can change the version of enos by modifying ~ENOS~ values in

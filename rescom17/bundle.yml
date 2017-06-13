@@ -16,44 +16,62 @@
       - python-virtualenv
     sudo: true
 
-  - name: Download enos
-    git:
-      repo: "{{ enos.repo }}"
-      dest: ~/enos
-      depth: 1
-      version: "{{ enos.version }}"
-
-  - name: Create a directory for the virtualenv
-    file: path=~/enos/venv state=directory
-
-  - name: Install enos requirements in the virtualenv
-    pip:
-      requirements: requirements.txt
-      chdir: /home/vagrant/enos
-      virtualenv: ~/enos/venv
-
-  - name: Generate a new ssh key
+  - name: Generate a new ssh key for kolla-ansible
     command: ssh-keygen -t rsa -P '' -f '/home/vagrant/.ssh/id_rsa'
     args:
       creates: /home/vagrant/.ssh/id_rsa
 
   - name: Put ssh public key into root authorized_keys to authorize root ssh connections
     shell: |
-      mkdir ~/.ssh/
+      mkdir /root/.ssh/
       cat /home/vagrant/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
     args:
       creates: /root/.ssh/autorized_keys
     sudo: true
 
-  - name: debug
-    debug: msg="Follow enos bootstrapping with `vagrant ssh -- tail -f /tmp/enos-bootstrap.log`"
+  - name: Give vagrant write access to /opt
+    file: path=/opt group=vagrant owner=vagrant
+    sudo: true
+
+  - name: Download enos into /opt
+    git:
+      repo: "{{ enos.repo }}"
+      dest: /opt/enos
+      depth: 1
+      version: "{{ enos.version }}"
+
+  - name: Copy local reservation.yaml files into /opt/enos/
+    copy: src=reservation.yaml dest=/opt/enos
+
+  - name: Copy local patch directoy into /opt/enos/
+    copy: src=patch dest=/opt/enos
+
+  - name: Patch enos to download cirros into /opt rather than /tmp
+    command: git apply patch/cirros-in-opt.patch
+    args:
+      chdir: /opt/enos
+
+  - name: Create a directory for the virtualenv
+    file: path=/opt/enos/venv state=directory
+
+  - name: Install enos requirements in the virtualenv
+    pip:
+      requirements: requirements.txt
+      chdir: /opt/enos
+      virtualenv: /opt/enos/venv
+
+  - name: Start of enos bootstrapping (i.e., enos deploy; enos destroy)
+    debug:
+      msg:
+        - "Follow bootstrapping with:"
+        - "vagrant ssh -- tail -f /tmp/enos-bootstrap.log"
 
   - name: Call enos deploy
     shell: |
       . venv/bin/activate
-      python -m enos.enos deploy -f /vagrant_data/reservation.yml 2>&1 > /tmp/enos-bootstrap.log
+      python -m enos.enos deploy -f reservation.yaml 2>&1 > /tmp/enos-bootstrap.log
     args:
-      chdir: /home/vagrant/enos/
+      chdir: /opt/enos/
       creates: enos-deployed
 
   - name: Call enos destroy
@@ -61,5 +79,5 @@
       . venv/bin/activate
       python -m enos.enos destroy 2>&1 >> /tmp/enos-bootstrap.log
     args:
-      chdir: /home/vagrant/enos/
+      chdir: /opt/enos/
       creates: enos-destroyed

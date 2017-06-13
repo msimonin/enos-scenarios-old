@@ -1,0 +1,22 @@
+diff --git a/enos/enos.py b/enos/enos.py
+index f6dcbba..8c91d1a 100755
+--- a/enos/enos.py
++++ b/enos/enos.py
+@@ -257,7 +257,7 @@ def init_os(env=None, **kwargs):
+     images = [{'name': 'cirros.uec',
+                'url': url}]
+     for image in images:
+-        cmd.append("wget -q -O /tmp/%s %s" % (image['name'], image['url']))
++        cmd.append("wget -q -O /opt/%s %s" % (image['name'], image['url']))
+         cmd.append("openstack image list "
+                    "--property name=%(image_name)s -c Name -f value "
+                    "| grep %(image_name)s"
+@@ -266,7 +266,7 @@ def init_os(env=None, **kwargs):
+                    " --container-format=bare"
+                    " --property architecture=x86_64"
+                    " --public"
+-                   " --file /tmp/%(image_name)s"
++                   " --file /opt/%(image_name)s"
+                    " %(image_name)s" % {'image_name': image['name'], })
+ 
+     # flavors name, ram, disk, vcpus

@@ -58,4 +58,4 @@ kolla:
   openstack_logging_debug: True
   enable_heat: "yes"
 
-  node_custom_config: /vagrant_data/patch/
+  node_custom_config: patch/
