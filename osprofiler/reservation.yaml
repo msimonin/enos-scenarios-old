@@ -3,16 +3,31 @@
 # Enos Configuration File                         #
 # ############################################### #
 
-name: OpenStack/OSProfiler
+# Provider specific config
+provider:
+  name: Enos/WAN-cpt10.2
+  type: g5k
+  walltime: "13:59:00"
+  reservation: "2017-05-03 19:00:01"
+  vlans:
+    rennes: "{type='kavlan'}/vlan=1"
+  role_distribution: debug
+  single_interface: true
 
-# Resources Provider. Values are: g5k, vagrant
-provider: 
-  type: vagrant
-  box: bento/debian-8.7
+# Resources description
+topology:
+  grp1:
+    parasilo:
+      control: 1
+  grp2:
+    parasilo:
+      compute: 10
 
-resources:
-  extra-large:
-    compute: 1
+network_constraints:
+  enable: true
+  default_delay: 100ms
+  default_loss: 25%
+  default_rate: 40Gbit
 
 enable_monitoring: false
 
@@ -20,45 +35,36 @@ enable_monitoring: false
 # Inventory to use                                #
 # ############################################### #
 
-# This will describe the topology of your services
-inventory: /home/rfish/prog/inria-perso/enos-scenarios/osprofiler/inventory
+# Topology of your services
+inventory: /home/rcherrueau/enos-scenarios/wan/inventory
+
+# ############################################### #
+# docker registry parameters
+# ############################################### #
+registry:
+  ceph: true
+  ceph_keyring: /home/rcherrueau/.ceph/ceph.client.rcherrueau.keyring
+  ceph_id: rcherrueau
+  ceph_rbd: rcherrueau_/docker_registry
+  ceph_mon_host:
+    - ceph0.rennes.grid5000.fr
+    - ceph1.rennes.grid5000.fr
+    - ceph2.rennes.grid5000.fr
 
 # ############################################### #
 # Kolla parameteres                               #
 # ############################################### #
 # Repository
-kolla_repo: "https://git.openstack.org/openstack/kolla-ansible"
-kolla_ref: "stable/ocata"
+# kolla_repo: https://git.openstack.org/openstack/kolla-ansible
+kolla_repo: https://github.com/openstack/kolla-ansible
+kolla_ref: stable/ocata
 
 # globals.yml
 kolla:
-  kolla_base_distro: "centos"
-  kolla_install_type: "source"
-  docker_namespace: "beyondtheclouds"
-  openstack_release: "osprofiler-support" # Contains pymongo into
-                                          # the list of dependencies
-  openstack_logging_debug: "True"
-
+  kolla_base_distro: centos
+  kolla_install_type: source
+  openstack_release: osprofiler-support
+  docker_namespace: beyondtheclouds
   enable_heat: "no"
 
-  # # OSProfiler Specific --
-  # # There is two ways to enable OSProfiler. First by using
-  # # `oslo.messaging` to write trace events and then let
-  # # Ceilometer/Panko manage these events. Or, directly by writing
-  # # events into mongodb.
-  # #
-  # # - OSProfiler using Oslo_messagig/Ceilometer/Panko
-  # enable_ceilometer: "yes"
-  # ceilometer_database_type: "mysql" # Prevents from installing mongodb.
-  #                                   # however, gnocchi is a better choice
-  # ceilometer_event_type: "panko"
-  # enable_panko: "yes"               # Default panko database is mysql
-  # # - OSProfiler using mongodb
-  enable_mongodb: "yes"
-  node_custom_config: /home/rfish/prog/inria-perso/enos-scenarios/osprofiler/patches
-
-patches:
-  - name: Replace !/bin/bash with !/usr/bin/env bash
-    src: /home/rfish/prog/inria-perso/enos-scenarios/osprofiler/patches/kolla-ansible
-    dst: kolla/tools/kolla-ansible
-    enabled: "yes"
+rally_pip: git+https://github.com/rcherrueau/rally@osprofiler-support#egg=rally

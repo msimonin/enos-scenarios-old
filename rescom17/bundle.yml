@@ -32,7 +32,7 @@
       chdir: /home/vagrant/enos
       virtualenv: ~/enos/venv
 
-  - name: Generate a new ssh keys
+  - name: Generate a new ssh key
     command: ssh-keygen -t rsa -P '' -f '/home/vagrant/.ssh/id_rsa'
     args:
       creates: /home/vagrant/.ssh/id_rsa
@@ -46,12 +46,12 @@
     sudo: true
 
   - name: debug
-    debug: msg="Do `vagrant ssh -- tail -f /tmp/enos-deploy.log` to follow enos deployment"
+    debug: msg="Follow enos bootstrapping with `vagrant ssh -- tail -f /tmp/enos-bootstrap.log`"
 
   - name: Call enos deploy
     shell: |
       . venv/bin/activate
-      python -m enos.enos deploy -f /vagrant_data/reservation.yml 2>&1 > /tmp/enos-deploy.log
+      python -m enos.enos deploy -f /vagrant_data/reservation.yml 2>&1 > /tmp/enos-bootstrap.log
     args:
       chdir: /home/vagrant/enos/
       creates: enos-deployed
@@ -59,7 +59,7 @@
   - name: Call enos destroy
     shell: |
       . venv/bin/activate
-      python -m enos.enos destroy 2>&1 > /tmp/enos-destroy.log
+      python -m enos.enos destroy 2>&1 >> /tmp/enos-bootstrap.log
     args:
       chdir: /home/vagrant/enos/
       creates: enos-destroyed
