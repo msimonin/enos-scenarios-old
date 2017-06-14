@@ -60,6 +60,14 @@
       chdir: /opt/enos
       virtualenv: /opt/enos/venv
 
+  - name: Source venv at user connection and make alias enos='python -m enos.enos'
+    blockinfile:
+      name: ~/.profile
+      state: present
+      block: |
+        alias enos="python -m enos.enos"
+        . /opt/enos/venv/bin/activate
+
   - name: Start of enos bootstrapping (i.e., enos deploy; enos destroy)
     debug:
       msg:

@@ -1,0 +1,143 @@
+# -*- mode: org -*-
+
+#+TITLE: Measure and Understand Specific
+#+TITLE: Configurations of OpenStack with EnOS
+#+SUBTITLE: RESCOM 2017, 2017-06-20
+#+AUTHOR: Ronan-Alexandre Cherrueau, Dimitri Pertin, Mathieu Simonin
+#+EMAIL: {firstname.lastname}@inria.fr
+
+#+OPTIONS: ':t
+#+OPTIONS: email:t
+
+# http://gongzhitaao.org/orgcss/
+
+* TODO EnOS in a Nutshell
+EnOS gets its name from /Experimental environment for OpenStack/.
+
+Scientific tool, not for operator.
+
+TODO: EnOS[fn:enos-paper][fn:enos-code] introduction
+
+In this TP, we gonna:
+- a
+- b
+- c
+
+* Requirements and Setup
+** Requirements List
+- Vagrant 1.9 or upper[fn:vagrant]
+- Rescom17 Vagrant box[fn:enos-box] (contains enos with all its dependencies)
+
+** Setup
+Download the Rescom17 Vagrant box[fn:enos-box] in your working
+directory. The VM contains EnOS together with all resources needed by
+EnOS to run OpenStack. The main drawback is that the box is relatively
+huge (4Go), but you can run EnOS offline.
+
+While the box is downloading, produce a ~Vagrantfile~ with the content
+below. This ~Vagrantfile~ tells VirtualBox to boot the ~rescom17~ VM
+with two networks interfaces and assigns IP. It also customizes the VM
+by modifying amounts of ~cpu~ and ~memory~ needed by the VM. These
+amounts are the bare necessities for OpenStack correct running.
+
+: $ cat Vagrantfile
+#+BEGIN_SRC ruby
+Vagrant.configure("2") do |config|
+  # Location of the VM image
+  config.vm.box = "file://./rescom17.box"
+
+  # Network configuration
+  config.vm.hostname = "enos-node"
+  config.vm.network :private_network, ip: "192.168.142.127"
+  config.vm.network :private_network, ip: "192.168.143.127"
+
+  # VBoxManage
+  config.vm.provider "virtualbox" do |vb|
+    vb.cpus = 4
+    vb.memory = 6144
+  end
+end
+#+END_SRC
+
+Then start the VM and connect to it.
+: $ vagrant up
+: $ vagrant ssh
+
+The EnOS tool is already installed in ~/opt/enos~. To be sure that
+everything is setup correctly, you can go into the EnOS directory and
+display the help message.
+#+BEGIN_EXAMPLE
+$ cd /opt/enos
+$ enos --help
+Enos: Monitor and test your OpenStack.
+
+usage: enos <command> [<args> ...] [-e ENV|--env=ENV]
+            [-h|--help] [-v|--version] [-s|--silent|--vv]
+
+...
+
+Commands:
+  up             Get resources and install the docker registry.
+  os             Run kolla and install OpenStack.
+  init           Initialise OpenStack with the bare necessities.
+  bench          Run rally on this OpenStack.
+  backup         Backup the environment
+  ssh-tunnel     Print configuration for port forwarding with horizon.
+  tc             Enforce network constraints
+  info           Show information of the actual deployment.
+  destroy        Destroy the deployment and optionally the related resources.
+  deploy         Shortcut for enos up, then enos os and enos config.
+
+See 'enos <command> --help' for more information on a specific
+command.
+#+END_EXAMPLE
+
+* Deploy OpenStack using EnOS
+EnOS helps you to test and measure /specific configurations/ of
+OpenStack. A configuration states OpenStack resources you want to
+measure together with there topology. It could say, "/Deploy a basic
+OpenStack on a single node/", or "/Put OpenStack control services on
+ClusterA and compute services on ClusterB/", but also "/Deploy each
+OpenStack services on a dedicated node/ /and add WAN network latency
+between them/". So that EnOS can deploy such OpenStack over your
+testbed and run performance analysis. This section shows you, how to
+define a configuration and deploy OpenStack over your testbed.
+
+** Describe and customize the topology of your OpenStack (~reservation.yaml~)
+The OpenStack configuration goes into a file called ~reservation.yaml~
+under a key named ~resources~. For instance, the following description
+deploys a basic OpenStack, saying:
+
+#+BEGIN_QUOTE
+On my ~clusterA~, I want 1 node for my control services and 1 node for
+my network services. And on my ~clusterB~, I want 50 computes nodes.
+#+END_QUOTE
+
+EnOS comes with provider for
+For the sake of this TP (where not everybody got a grid5000 account,
+and the Internet connexion is well well) we will install all OpenStack
+services on our current VM using the static provider.
+
+** Deploy OpenStack (~enos deploy -f reservation.yaml~)
+
+** Play with OpenStack
+
+* Measure OpenStack Behavior using EnOS
+** Visualize OpenStack Behavior
+
+** Controlplane Benchmarking with Rally
+
+** Dataplane Benchmarking with Shaker
+
+** Integration with a custom benchmarking suite
+
+* Add Traffic Shaping
+** Define Network Constraints (latency + packet loss)
+
+** Run Dataplane Benchmarks with and without DVR
+
+* Footnotes
+[fn:enos-paper] https://hal.inria.fr/hal-01415522v2
+[fn:enos-code] https://github.com/BeyondTheClouds/enos
+[fn:vagrant] https://www.vagrantup.com/
+[fn:enos-box] http://enos.irisa.fr/vagrant-box/rescom17.box
