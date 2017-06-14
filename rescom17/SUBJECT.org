@@ -18,27 +18,37 @@ Scientific tool, not for operator.
 
 TODO: EnOS[fn:enos-paper][fn:enos-code] introduction
 
-In this TP, we gonna:
-- a
-- b
-- c
+OpenStack has become the de-facto solution to operate compute, network
+and storage resources in public and private clouds. However, developers and
+scientists are facing challenges when it comes to deploy and benchmark such
+a complex software stack. This lab aims at exploring EnOS, a holistic
+framework leveraging containers to conduct easy and reproducible
+evaluations of different OpenStack deployments.
+  
+In this lab, we gonna:
+- Boot a VM containing the requirements to use EnOS,
+- Deploy OpenStack inside the VM using EnOS,
+- Operate this OpenStack instance to manage IaaS resources (e.g. boot VMs),
+- Run some benchmarks to evaluate both control and data planes,
+- Monitoring and metrics visualization through Grafana,
+- Application to highlight the benefit of your awesome feature.
 
 * Requirements and Setup
 ** Requirements List
 - Vagrant 1.9 or upper[fn:vagrant]
-- Rescom17 Vagrant box[fn:enos-box] (contains enos with all its dependencies)
+- Rescom17 Vagrant box[fn:enos-box] (contains EnOS with all its dependencies)
 
 ** Setup
 Download the Rescom17 Vagrant box[fn:enos-box] in your working
 directory. The VM contains EnOS together with all resources needed by
 EnOS to run OpenStack. The main drawback is that the box is relatively
-huge (4Go), but you can run EnOS offline.
+huge (4GB), but you can run EnOS offline.
 
-While the box is downloading, produce a ~Vagrantfile~ with the content
+While the box is downloading, edit a ~Vagrantfile~ with the content
 below. This ~Vagrantfile~ tells VirtualBox to boot the ~rescom17~ VM
-with two networks interfaces and assigns IP. It also customizes the VM
-by modifying amounts of ~cpu~ and ~memory~ needed by the VM. These
-amounts are the bare necessities for OpenStack correct running.
+with two network interfaces and assigns their IP addresses. It also
+customizes the VM by modifying amounts of ~cpu cores~ and ~memory~ needed by
+the VM. These amounts are the bare necessities to run correctly OpenStack.
 
 : $ cat Vagrantfile
 #+BEGIN_SRC ruby
@@ -94,7 +104,7 @@ command.
 
 * Deploy OpenStack using EnOS
 EnOS helps you to test and measure /specific configurations/ of
-OpenStack. A configuration states OpenStack resources you want to
+OpenStack. A configuration states the OpenStack resources you want to
 measure together with there topology. It could say, "/Deploy a basic
 OpenStack on a single node/", or "/Put OpenStack control services on
 ClusterA and compute services on ClusterB/", but also "/Deploy each
@@ -104,7 +114,7 @@ testbed and run performance analysis. This section shows you, how to
 define a configuration and deploy OpenStack over your testbed.
 
 ** Describe and customize the topology of your OpenStack (~reservation.yaml~)
-The OpenStack configuration goes into a file called ~reservation.yaml~
+The OpenStack configuration is described in a file called ~reservation.yaml~
 under a key named ~resources~. For instance, the following description
 deploys a basic OpenStack, saying:
 
@@ -113,14 +123,50 @@ On my ~clusterA~, I want 1 node for my control services and 1 node for
 my network services. And on my ~clusterB~, I want 50 computes nodes.
 #+END_QUOTE
 
-EnOS comes with provider for
-For the sake of this TP (where not everybody got a grid5000 account,
+EnOS comes with ~providers~ which are connectors to communicate with
+different testbeds (e.g. Vagrant, Grid'5000, or OpenStack itself).
+Such providers are used to provision and configure the machines on which EnOS
+deploys the OpenStack services.
+For instance, the Grid'5000 provider can be used by EnOS to reserve and
+deploy machines on different clusters of Grid'5000 (refer to
+[fn:enos-g5k-provider] for further information).
+
+For the sake of this lab (since everybody does not have a Grid5000 account,
 and the Internet connexion is well well) we will install all OpenStack
-services on our current VM using the static provider.
+services in our current VM using the static provider.
 
 ** Deploy OpenStack (~enos deploy -f reservation.yaml~)
 
+#+BEGIN_SRC bash
+$ cd /opt/enos
+$ vim reservation.yml.sample
+$ enos deploy -f reservation.yaml
+#+END_SRC
+
+The deployment process starts each OpenStack services (e.g. Keystone,
+RabbitMQ, MariaDB) inside a dedicated Docker container. These containers can
+be observed from another terminal of your VM with:
+   
+#+BEGIN_SRC bash
+$ sudo docker ps
+#+END_SRC
+
 ** Play with OpenStack
+
+The last service deployed is the OpenStack dashboard (Horizon). Once the
+deployment process is finished, Horizon is reachable from the web browser of
+your host machine http://192.168.142.127 with the following credentials:
+- login: admin
+- password: demo
+
+From here you can reach ~Project > Compute > Instances > Launch Instance~ and
+boot a virtual machine given the following information:
+- a name,
+- an image (i.e. here CirrOS image is provided),
+- a flavor to limit the resources of your instance (e.g. tiny),
+- and a network setting (e.g. public).
+
+After a few moments, the instance should be ~active~.
 
 * Measure OpenStack Behavior using EnOS
 ** Visualize OpenStack Behavior
@@ -141,3 +187,4 @@ services on our current VM using the static provider.
 [fn:enos-code] https://github.com/BeyondTheClouds/enos
 [fn:vagrant] https://www.vagrantup.com/
 [fn:enos-box] http://enos.irisa.fr/vagrant-box/rescom17.box
+[fn:enos-g5k-provider] https://enos.readthedocs.io/en/latest/provider/grid5000.html
