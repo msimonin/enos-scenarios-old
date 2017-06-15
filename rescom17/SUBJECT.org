@@ -213,7 +213,7 @@ the right of each possibility. When the configuration is OK, the
 ~Launch Instance~ button should be enabled. Please click it. After a
 few moments, the instance should be ~active~.
 
-**** Unleash the Operator in you (optional)
+*** Unleash the Operator in you (optional)
 OpenStack provides a command line interface to operate your Cloud. But
 before using it, you need first to populate your environment with
 OpenStack credentials, so that the command line wont bother you with
