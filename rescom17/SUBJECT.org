@@ -33,9 +33,10 @@ In this lab, we gonna:
 - Monitoring and metrics visualization through Grafana,
 - Application to highlight the benefit of your awesome feature.
 
-* Requirements and Setup
+* Requirements and Setup (TO BE DONE BEFORE THE LAB)
 ** Requirements List
-- Vagrant 1.9 or upper[fn:vagrant]
+- VirtualBox [fn:virtualbox-downloads]
+- Vagrant 1.9 or upper[fn:vagrant-downloads]
 - Rescom17 Vagrant box[fn:enos-box] (contains EnOS with all its dependencies)
 
 ** Setup
@@ -185,6 +186,7 @@ After a few moments, the instance should be ~active~.
 * Footnotes
 [fn:enos-paper] https://hal.inria.fr/hal-01415522v2
 [fn:enos-code] https://github.com/BeyondTheClouds/enos
-[fn:vagrant] https://www.vagrantup.com/
+[fn:virtualbox-downloads] https://www.virtualbox.org/wiki/Downloads
+[fn:vagrant-downloads] https://www.vagrantup.com/downloads.html
 [fn:enos-box] http://enos.irisa.fr/vagrant-box/rescom17.box
 [fn:enos-g5k-provider] https://enos.readthedocs.io/en/latest/provider/grid5000.html
