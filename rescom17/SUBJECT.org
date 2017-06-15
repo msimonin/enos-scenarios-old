@@ -11,24 +11,19 @@
 
 # http://gongzhitaao.org/orgcss/
 
-* TODO EnOS in a Nutshell
-EnOS gets its name from /Experimental environment for OpenStack/.
-
-Scientific tool, not for operator.
-
-TODO: EnOS[fn:enos-paper][fn:enos-code] introduction
-
+* EnOS in a Nutshell
 OpenStack has become the de-facto solution to operate compute, network
-and storage resources in public and private clouds. However, developers and
-scientists are facing challenges when it comes to deploy and benchmark such
-a complex software stack. This lab aims at exploring EnOS, a holistic
-framework leveraging containers to conduct easy and reproducible
-evaluations of different OpenStack deployments.
-  
+and storage resources in public and private clouds. However,
+developers and scientists are facing challenges when it comes to
+deploy and benchmark such a complex software stack. This lab aims at
+exploring EnOS[fn:enos-paper][fn:enos-code], a holistic framework
+leveraging containers to conduct easy and reproducible evaluations of
+different OpenStack configurations.
+
 In this lab, we gonna:
-- Boot a VM containing the requirements to use EnOS,
-- Deploy OpenStack inside the VM using EnOS,
-- Operate this OpenStack instance to manage IaaS resources (e.g. boot VMs),
+- Deploy and Configure OpenStack using EnOS,
+- Operate this OpenStack instance to manage IaaS resources (e.g. boot
+  VMs),
 - Run some benchmarks to evaluate both control and data planes,
 - Monitoring and metrics visualization through Grafana,
 - Application to highlight the benefit of your awesome feature.
@@ -37,21 +32,28 @@ In this lab, we gonna:
 ** Requirements List
 - VirtualBox [fn:virtualbox-downloads]
 - Vagrant 1.9 or upper[fn:vagrant-downloads]
-- Rescom17 Vagrant box[fn:enos-box] (contains EnOS with all its dependencies)
+- Rescom17 Vagrant box[fn:enos-box] (contains EnOS with all its
+  dependencies)
 
 ** Setup
 Download the Rescom17 Vagrant box[fn:enos-box] in your working
 directory. The VM contains EnOS together with all resources needed by
-EnOS to run OpenStack. The main drawback is that the box is relatively
-huge (4GB), but you can run EnOS offline.
+EnOS to run OpenStack. The box is relatively huge (4GB), but contains
+everything you need to run EnOS offline.
 
 While the box is downloading, edit a ~Vagrantfile~ with the content
 below. This ~Vagrantfile~ tells VirtualBox to boot the ~rescom17~ VM
 with two network interfaces and assigns their IP addresses. It also
-customizes the VM by modifying amounts of ~cpu cores~ and ~memory~ needed by
-the VM. These amounts are the bare necessities to run correctly OpenStack.
+customizes the VM by modifying amounts of ~cpu cores~ and ~memory~
+needed by the VM. These amounts are the bare necessities to correctly
+run OpenStack. Obviously, it means that your host machine should
+provide such resources.
 
-: $ cat Vagrantfile
+#+BEGIN_NOTE
+To get more information about that ~Vagranfile~ and its syntax, you
+can refer to the official documentation[fn:vagrantfile].
+#+END_NOTE
+
 #+BEGIN_SRC ruby
 Vagrant.configure("2") do |config|
   # Location of the VM image
@@ -106,68 +108,130 @@ command.
 * Deploy OpenStack using EnOS
 EnOS helps you to test and measure /specific configurations/ of
 OpenStack. A configuration states the OpenStack resources you want to
-measure together with there topology. It could say, "/Deploy a basic
-OpenStack on a single node/", or "/Put OpenStack control services on
-ClusterA and compute services on ClusterB/", but also "/Deploy each
-OpenStack services on a dedicated node/ /and add WAN network latency
-between them/". So that EnOS can deploy such OpenStack over your
-testbed and run performance analysis. This section shows you, how to
-define a configuration and deploy OpenStack over your testbed.
+measure together with there topology. A configuration could say,
+"/Deploy a basic OpenStack on a single node/", or "/Put OpenStack
+control services on ClusterA and compute services on ClusterB/", but
+also "/Deploy each OpenStack services on a dedicated node/ /and add
+WAN network latency between them/". So that EnOS can deploy such
+OpenStack over your testbed and run performance analysis. This section
+shows you, how to define a configuration and deploy OpenStack over
+your testbed.
 
-** Describe and customize the topology of your OpenStack (~reservation.yaml~)
-The OpenStack configuration is described in a file called ~reservation.yaml~
-under a key named ~resources~. For instance, the following description
-deploys a basic OpenStack, saying:
+** Describe and customize the topology of your OpenStack
+The OpenStack configuration is described in a file called
+~reservation.yaml~ under a key named ~resources~. For instance,
+configuration in listing [[lst:basic]] shows you how easy it is, with
+EnOS, to target a basic OpenStack deployment. It says:
 
 #+BEGIN_QUOTE
-On my ~clusterA~, I want 1 node for my control services and 1 node for
-my network services. And on my ~clusterB~, I want 50 computes nodes.
+On my ~clusterA~, I want ~1~ node for control services and ~1~ node
+for network services. And on my ~clusterB~, I want ~50~ computes
+nodes.
 #+END_QUOTE
 
-EnOS comes with ~providers~ which are connectors to communicate with
-different testbeds (e.g. Vagrant, Grid'5000, or OpenStack itself).
-Such providers are used to provision and configure the machines on which EnOS
-deploys the OpenStack services.
-For instance, the Grid'5000 provider can be used by EnOS to reserve and
-deploy machines on different clusters of Grid'5000 (refer to
-[fn:enos-g5k-provider] for further information).
+Then, scaling horizontally is as simple as increasing the number next
+to the service name. You can also tune your topology and put some
+services on a dedicated node by explicitly giving resources to it. For
+instance, configuration in listing [[lst:advanced]] tells EnOS to pull out
+nova conductor from control node and start it on ~5~ dedicated nodes.
 
-For the sake of this lab (since everybody does not have a Grid5000 account,
-and the Internet connexion is well well) we will install all OpenStack
-services in our current VM using the static provider.
+#+ATTR_HTML: style="float:left;"
+#+CAPTION: EnOS Configuration for
+#+CAPTION: Basic OpenStack Deployment
+#+NAME: lst:basic
+#+BEGIN_SRC yaml
+resources:
+  clusterA:
+    control: 1
+    network: 1
+  clusterB:
+    compute: 50
+#+END_SRC
 
-** Deploy OpenStack (~enos deploy -f reservation.yaml~)
+#+CAPTION: EnOS Configuration for
+#+CAPTION: Advanced OpenStack Deployment
+#+NAME: lst:advanced
+#+BEGIN_SRC yaml
+resources:
+  clusterA:
+    control: 1
+    network: 1
+    nova-conductor: 5
+  clusterB:
+    compute: 50
+#+END_SRC
+
+EnOS comes with ~providers~ which are connectors to deploy your
+OpenStack on different testbeds. The actual implementation gives
+providers for Static resources, Vagrant, Grid'5000 and OpenStack
+itself. Such providers are used to provision and configure the
+machines on which EnOS deploys the OpenStack services. For instance,
+the Grid'5000 provider can be used by EnOS to reserve and deploy
+machines on different clusters of Grid'5000. In the same manner, the
+Vagrant provider can be used by EnOS to start VM on your current
+machine. Please, refer to EnOS documentation[fn:enos-g5k-provider] for
+further information.
+
+For the sake of this lab (since everybody does not have a Grid'5000
+account, and the Internet connection may be slow) we will install all
+OpenStack services in our current working space using the static
+provider. Take a look at the current ~/opt/enos/reservation.yaml~ and
+see that it achieves a basic OpenStack deployment. Based on that
+configuration, you will be able to ask EnOS to deploy OpenStack.
+
+** Deploy OpenStack
+EnOS manages all the aspect of an OpenStack deployment by calling
+~enos deploy~. Concretely the ~deploy~ phase do:
 
 #+BEGIN_SRC bash
 $ cd /opt/enos
-$ vim reservation.yml.sample
 $ enos deploy -f reservation.yaml
 #+END_SRC
 
 The deployment process starts each OpenStack services (e.g. Keystone,
-RabbitMQ, MariaDB) inside a dedicated Docker container. These containers can
-be observed from another terminal of your VM with:
-   
-#+BEGIN_SRC bash
-$ sudo docker ps
-#+END_SRC
+Nova, Neutron, ...) inside a dedicated Docker container. These
+containers can be observed from another terminal of your VM with:
+: $ sudo docker ps
 
 ** Play with OpenStack
-
 The last service deployed is the OpenStack dashboard (Horizon). Once the
 deployment process is finished, Horizon is reachable from the web browser of
 your host machine http://192.168.142.127 with the following credentials:
 - login: admin
 - password: demo
 
-From here you can reach ~Project > Compute > Instances > Launch Instance~ and
-boot a virtual machine given the following information:
-- a name: (e.g. 'test' for instance),
-- an image (i.e. here CirrOS image is provided),
-- a flavor to limit the resources of your instance (e.g. tiny),
-- and a network setting (e.g. public).
+From here you can reach ~Project > Compute > Instances > Launch
+Instance~ and boot a virtual machine given the following information:
+- a name,
+- an image (i.e. here a CirrOS image is provided),
+- a flavor to limit the resources of your instance (e.g. I recommend
+  tiny),
+- and a network setting (e.g. private).
 
-Please note that you should select options by clicking on the arrow on the right of each possibility. When the configuration is ok, the 'Launch Instance' button should be enabled. Please click it. After a few moments, the instance should be ~active~.
+Please note that you should select options by clicking on the arrow on
+the right of each possibility. When the configuration is OK, the
+~Launch Instance~ button should be enabled. Please click it. After a
+few moments, the instance should be ~active~.
+
+**** Unleash the Operator in you (optional)
+OpenStack provides a command line interface to operate your Cloud. But
+before using it, you need first to populate your environment with
+OpenStack credentials, so that the command line wont bother you with
+requiring them each time. EnOS saves credentials in
+~/opt/enos/current/admin-openrc~. You can put them into you
+environment with:
+: source /opt/enos/current/admin-openrc
+
+You can then check that your environment is correctly populated by:
+: env|grep OS_*
+
+Next gives you a selection of well known OpenStack cli command to
+operate your cloud:
+- List all your Compute :: ~openstack hypervisor list~
+- List all your VM :: ~openstack server list~
+- Get details on a specific VM :: ~openstack server show <vm-name>~
+- List networks :: ~openstack network list~
+- Start a new VM :: ~openstack server create --image cirros.uec --flavor m1.tiny --nic net-id=$(openstack network list --column ID --format value | head -n 1) <vm-name>~
 
 * Measure OpenStack Behavior using EnOS
 ** Visualize OpenStack Behavior
@@ -184,9 +248,11 @@ Please note that you should select options by clicking on the arrow on the right
 ** Run Dataplane Benchmarks with and without DVR
 
 * Footnotes
+
 [fn:enos-paper] https://hal.inria.fr/hal-01415522v2
 [fn:enos-code] https://github.com/BeyondTheClouds/enos
 [fn:virtualbox-downloads] https://www.virtualbox.org/wiki/Downloads
 [fn:vagrant-downloads] https://www.vagrantup.com/downloads.html
 [fn:enos-box] http://enos.irisa.fr/vagrant-box/rescom17.box
 [fn:enos-g5k-provider] https://enos.readthedocs.io/en/latest/provider/grid5000.html
+[fn:vagrantfile] https://www.vagrantup.com/docs/vagrantfile/index.html
